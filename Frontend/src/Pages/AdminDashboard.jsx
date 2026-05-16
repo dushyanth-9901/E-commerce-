@@ -1,49 +1,95 @@
+// 📁 AdminDashboard.jsx
+
+// 🔥 IMPORT REACT HOOKS
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 function AdminDashboard() {
 
+  // =====================================================
   // 🔥 NAVIGATION
+  // =====================================================
   const navigate = useNavigate();
 
-  // 🔥 ACTIVE SIDEBAR
-  const [active, setActive] = useState("Dashboard");
+
+
+  // =====================================================
+  // 🔥 ACTIVE SIDEBAR MENU
+  // =====================================================
+  const [active, setActive] =
+    useState("Dashboard");
 
 
 
+  // =====================================================
   // 🔥 PRODUCTS STATE
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "iPhone 15",
-      stock: 25,
-      price: 80000,
-      image:
-        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"
-    },
+  // =====================================================
+  // 👉 Load products from localStorage
+  // 👉 If empty, use default products
+  // =====================================================
+  const [products, setProducts] = useState(() => {
 
-    {
-      id: 2,
-      name: "Samsung S24",
-      stock: 18,
-      price: 70000,
-      image:
-        "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf"
-    },
-
-    {
-      id: 3,
-      name: "MacBook Pro",
-      stock: 12,
-      price: 120000,
-      image:
-        "https://images.unsplash.com/photo-1517336714739-489689fd1ca8"
-    }
-  ]);
+    // 🔥 GET SAVED PRODUCTS
+    const savedProducts =
+      localStorage.getItem("products");
 
 
 
-  // 🔥 ADD PRODUCT FORM
+    // 🔥 RETURN SAVED OR DEFAULT PRODUCTS
+    return savedProducts
+      ? JSON.parse(savedProducts)
+      : [
+
+          {
+            id: 1,
+            name: "iPhone 15",
+            stock: 25,
+            price: 80000,
+            image:
+              "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"
+          },
+
+          {
+            id: 2,
+            name: "Samsung S24",
+            stock: 18,
+            price: 70000,
+            image:
+              "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf"
+          },
+
+          {
+            id: 3,
+            name: "MacBook Pro",
+            stock: 12,
+            price: 120000,
+            image:
+              "https://images.unsplash.com/photo-1517336714739-489689fd1ca8"
+          }
+
+        ];
+
+  });
+
+
+
+  // =====================================================
+  // 🔥 SAVE PRODUCTS TO LOCAL STORAGE
+  // =====================================================
+  useEffect(() => {
+
+    localStorage.setItem(
+      "products",
+      JSON.stringify(products)
+    );
+
+  }, [products]);
+
+
+
+  // =====================================================
+  // 🔥 ADD PRODUCT FORM STATE
+  // =====================================================
   const [form, setForm] = useState({
     name: "",
     price: "",
@@ -53,24 +99,39 @@ function AdminDashboard() {
 
 
 
-  // 🔥 EDIT MODE
-  const [editId, setEditId] = useState(null);
-
-  const [editForm, setEditForm] = useState({
-    name: "",
-    price: "",
-    stock: "",
-    image: ""
-  });
+  // =====================================================
+  // 🔥 EDIT PRODUCT STATE
+  // =====================================================
+  const [editId, setEditId] =
+    useState(null);
 
 
 
-  // 🔐 ADMIN PROTECTION
+  // =====================================================
+  // 🔥 EDIT FORM STATE
+  // =====================================================
+  const [editForm, setEditForm] =
+    useState({
+      name: "",
+      price: "",
+      stock: "",
+      image: ""
+    });
+
+
+
+  // =====================================================
+  // 🔐 ADMIN PAGE PROTECTION
+  // =====================================================
   useEffect(() => {
 
+    // 🔥 CHECK ADMIN LOGIN
     const isAdmin =
       localStorage.getItem("isAdmin");
 
+
+
+    // ❌ REDIRECT IF NOT ADMIN
     if (!isAdmin) {
       navigate("/admin");
     }
@@ -79,7 +140,9 @@ function AdminDashboard() {
 
 
 
-  // 🔥 ADD PRODUCT
+  // =====================================================
+  // 🔥 ADD PRODUCT FUNCTION
+  // =====================================================
   const addProduct = () => {
 
     // ❌ VALIDATION
@@ -95,9 +158,9 @@ function AdminDashboard() {
 
 
 
-    // 🔥 NEW PRODUCT
+    // 🔥 CREATE NEW PRODUCT
     const newProduct = {
-      id: products.length + 1,
+      id: Date.now(),
       name: form.name,
       price: form.price,
       stock: form.stock,
@@ -126,27 +189,37 @@ function AdminDashboard() {
 
 
 
-  // 🔥 DELETE PRODUCT
+  // =====================================================
+  // 🔥 DELETE PRODUCT FUNCTION
+  // =====================================================
   const deleteProduct = (id) => {
 
+    // 🔥 FILTER PRODUCTS
     const filteredProducts =
       products.filter(
         (item) => item.id !== id
       );
 
+
+
+    // 🔥 UPDATE STATE
     setProducts(filteredProducts);
 
   };
 
 
 
-  // 🔥 EDIT PRODUCT
+  // =====================================================
+  // 🔥 EDIT PRODUCT FUNCTION
+  // =====================================================
   const editProduct = (product) => {
 
-    // 🔥 STORE EDIT ID
+    // 🔥 STORE PRODUCT ID
     setEditId(product.id);
 
-    // 🔥 FILL FORM
+
+
+    // 🔥 FILL EDIT FORM
     setEditForm({
       name: product.name,
       price: product.price,
@@ -158,9 +231,12 @@ function AdminDashboard() {
 
 
 
-  // 🔥 UPDATE PRODUCT
+  // =====================================================
+  // 🔥 UPDATE PRODUCT FUNCTION
+  // =====================================================
   const updateProduct = () => {
 
+    // 🔥 UPDATE MATCHING PRODUCT
     const updatedProducts =
       products.map((item) => {
 
@@ -184,9 +260,12 @@ function AdminDashboard() {
 
 
 
-    // 🔥 RESET
+    // 🔥 CLOSE MODAL
     setEditId(null);
 
+
+
+    // 🔥 RESET FORM
     setEditForm({
       name: "",
       price: "",
@@ -198,8 +277,11 @@ function AdminDashboard() {
 
 
 
+  // =====================================================
   // 📊 DASHBOARD STATS
+  // =====================================================
   const stats = [
+
     {
       title: "Total Sales",
       value: "₹ 4,50,000"
@@ -212,34 +294,45 @@ function AdminDashboard() {
 
     {
       title: "Stock Available",
-      value: "320"
+      value: products.length
     },
 
     {
       title: "Total Users",
       value: "860"
     }
+
   ];
 
 
 
+  // =====================================================
+  // 🔥 RETURN UI
+  // =====================================================
   return (
 
     <div style={styles.container}>
 
-      {/* 🔥 SIDEBAR */}
+      {/* =====================================================
+          🔥 SIDEBAR
+      ===================================================== */}
       <div style={styles.sidebar}>
 
+        {/* 🔥 LOGO */}
         <h2 style={styles.logo}>
           Admin Panel
         </h2>
 
 
 
+        {/* 🔥 MENU */}
         <ul style={styles.menu}>
 
+          {/* DASHBOARD */}
           <li
-            onClick={() => setActive("Dashboard")}
+            onClick={() =>
+              setActive("Dashboard")
+            }
             style={
               active === "Dashboard"
                 ? styles.activeMenu
@@ -251,8 +344,11 @@ function AdminDashboard() {
 
 
 
+          {/* ORDERS */}
           <li
-            onClick={() => setActive("Orders")}
+            onClick={() =>
+              setActive("Orders")
+            }
             style={
               active === "Orders"
                 ? styles.activeMenu
@@ -264,8 +360,11 @@ function AdminDashboard() {
 
 
 
+          {/* PRODUCTS */}
           <li
-            onClick={() => setActive("Products")}
+            onClick={() =>
+              setActive("Products")
+            }
             style={
               active === "Products"
                 ? styles.activeMenu
@@ -277,8 +376,11 @@ function AdminDashboard() {
 
 
 
+          {/* USERS */}
           <li
-            onClick={() => setActive("Users")}
+            onClick={() =>
+              setActive("Users")
+            }
             style={
               active === "Users"
                 ? styles.activeMenu
@@ -290,8 +392,11 @@ function AdminDashboard() {
 
 
 
+          {/* ANALYTICS */}
           <li
-            onClick={() => setActive("Analytics")}
+            onClick={() =>
+              setActive("Analytics")
+            }
             style={
               active === "Analytics"
                 ? styles.activeMenu
@@ -307,20 +412,30 @@ function AdminDashboard() {
 
 
 
-      {/* 🔥 MAIN CONTENT */}
+      {/* =====================================================
+          🔥 MAIN CONTENT
+      ===================================================== */}
       <div style={styles.main}>
 
         {/* 🔥 HEADER */}
         <div style={styles.header}>
 
+          {/* 🔥 ACTIVE PAGE TITLE */}
           <h1>{active}</h1>
 
+
+
+          {/* 🔥 LOGOUT BUTTON */}
           <button
             style={styles.logoutBtn}
             onClick={() => {
 
-              localStorage.removeItem("isAdmin");
+              // 🔥 REMOVE ADMIN LOGIN
+              localStorage.removeItem(
+                "isAdmin"
+              );
 
+              // 🔥 REDIRECT
               navigate("/admin");
 
             }}
@@ -332,83 +447,37 @@ function AdminDashboard() {
 
 
 
-        {/* 📊 DASHBOARD */}
+        {/* =====================================================
+            📊 DASHBOARD SECTION
+        ===================================================== */}
         {active === "Dashboard" && (
 
-          <>
-            {/* 📊 STATS */}
-            <div style={styles.statsGrid}>
+          <div style={styles.statsGrid}>
 
-              {stats.map((item, index) => (
+            {stats.map((item, index) => (
 
-                <div
-                  key={index}
-                  style={styles.card}
-                >
+              <div
+                key={index}
+                style={styles.card}
+              >
 
-                  <h3>{item.title}</h3>
+                <h3>{item.title}</h3>
 
-                  <h1>{item.value}</h1>
-
-                </div>
-
-              ))}
-
-            </div>
-
-
-
-            {/* 📈 CHART */}
-            <div style={styles.chartBox}>
-
-              <h2>Sales Analytics</h2>
-
-              <div style={styles.chartContainer}>
-
-                <div style={{
-                  ...styles.bar,
-                  height: "120px"
-                }}>
-                  <span>Jan</span>
-                </div>
-
-                <div style={{
-                  ...styles.bar,
-                  height: "180px"
-                }}>
-                  <span>Feb</span>
-                </div>
-
-                <div style={{
-                  ...styles.bar,
-                  height: "150px"
-                }}>
-                  <span>Mar</span>
-                </div>
-
-                <div style={{
-                  ...styles.bar,
-                  height: "220px"
-                }}>
-                  <span>Apr</span>
-                </div>
-
-                <div style={{
-                  ...styles.bar,
-                  height: "170px"
-                }}>
-                  <span>May</span>
-                </div>
+                <h1>{item.value}</h1>
 
               </div>
 
-            </div>
-          </>
+            ))}
+
+          </div>
+
         )}
 
 
 
-        {/* 📦 PRODUCTS */}
+        {/* =====================================================
+            📦 PRODUCTS SECTION
+        ===================================================== */}
         {active === "Products" && (
 
           <div>
@@ -420,7 +489,7 @@ function AdminDashboard() {
 
 
 
-              {/* 🔥 PRODUCT NAME */}
+              {/* PRODUCT NAME */}
               <input
                 type="text"
                 placeholder="Product Name"
@@ -436,7 +505,7 @@ function AdminDashboard() {
 
 
 
-              {/* 🔥 PRICE */}
+              {/* PRODUCT PRICE */}
               <input
                 type="number"
                 placeholder="Price"
@@ -452,7 +521,7 @@ function AdminDashboard() {
 
 
 
-              {/* 🔥 STOCK */}
+              {/* PRODUCT STOCK */}
               <input
                 type="number"
                 placeholder="Stock"
@@ -468,7 +537,7 @@ function AdminDashboard() {
 
 
 
-              {/* 🔥 IMAGE URL */}
+              {/* PRODUCT IMAGE */}
               <input
                 type="text"
                 placeholder="Image URL"
@@ -484,7 +553,7 @@ function AdminDashboard() {
 
 
 
-              {/* 🖼 LIVE IMAGE PREVIEW */}
+              {/* 🔥 IMAGE PREVIEW */}
               {form.image && (
 
                 <img
@@ -515,38 +584,46 @@ function AdminDashboard() {
 
 
 
-            {/* 🔥 PRODUCT TABLE */}
+            {/* =====================================================
+                🔥 PRODUCTS TABLE
+            ===================================================== */}
             <div style={styles.tableBox}>
 
               <h2>Manage Products</h2>
 
               <table style={styles.table}>
 
+                {/* TABLE HEAD */}
                 <thead>
 
                   <tr>
-                    <th>ID</th>
-                    <th>Image</th>
-                    <th>Name</th>
-                    <th>Price</th>
-                    <th>Stock</th>
-                    <th>Actions</th>
+                    <th style={styles.th}>ID</th>
+                    <th style={styles.th}>Image</th>
+                    <th style={styles.th}>Name</th>
+                    <th style={styles.th}>Price</th>
+                    <th style={styles.th}>Stock</th>
+                    <th style={styles.th}>Actions</th>
                   </tr>
 
                 </thead>
 
+
+
+                {/* TABLE BODY */}
                 <tbody>
 
                   {products.map((item) => (
 
                     <tr key={item.id}>
 
-                      <td>{item.id}</td>
+                      <td style={styles.td}>
+                        {item.id}
+                      </td>
 
 
 
-                      {/* 🖼 PRODUCT IMAGE */}
-                      <td>
+                      {/* PRODUCT IMAGE */}
+                      <td style={styles.td}>
 
                         <img
                           src={item.image}
@@ -563,18 +640,31 @@ function AdminDashboard() {
 
 
 
-                      <td>{item.name}</td>
-
-                      <td>₹ {item.price}</td>
-
-                      <td>{item.stock}</td>
-
+                      {/* PRODUCT NAME */}
+                      <td style={styles.td}>
+                        {item.name}
+                      </td>
 
 
-                      {/* 🔥 ACTION BUTTONS */}
-                      <td>
 
-                        {/* 🔥 EDIT */}
+                      {/* PRODUCT PRICE */}
+                      <td style={styles.td}>
+                        ₹ {item.price}
+                      </td>
+
+
+
+                      {/* PRODUCT STOCK */}
+                      <td style={styles.td}>
+                        {item.stock}
+                      </td>
+
+
+
+                      {/* ACTION BUTTONS */}
+                      <td style={styles.td}>
+
+                        {/* EDIT BUTTON */}
                         <button
                           style={styles.editBtn}
                           onClick={() =>
@@ -586,7 +676,7 @@ function AdminDashboard() {
 
 
 
-                        {/* 🔥 DELETE */}
+                        {/* DELETE BUTTON */}
                         <button
                           style={styles.deleteBtn}
                           onClick={() =>
@@ -609,151 +699,16 @@ function AdminDashboard() {
             </div>
 
           </div>
-        )}
 
-
-
-        {/* 🛒 ORDERS */}
-        {active === "Orders" && (
-
-          <div style={styles.tableBox}>
-
-            <h2>Recent Orders</h2>
-
-            <table style={styles.table}>
-
-              <thead>
-
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Status</th>
-                  <th>Amount</th>
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                <tr>
-                  <td>#1001</td>
-                  <td>Dushyanth</td>
-                  <td>Delivered</td>
-                  <td>₹ 80,000</td>
-                </tr>
-
-                <tr>
-                  <td>#1002</td>
-                  <td>Rahul</td>
-                  <td>Pending</td>
-                  <td>₹ 25,000</td>
-                </tr>
-
-              </tbody>
-
-            </table>
-
-          </div>
-        )}
-
-
-
-        {/* 👥 USERS */}
-        {active === "Users" && (
-
-          <div style={styles.tableBox}>
-
-            <h2>Users List</h2>
-
-            <table style={styles.table}>
-
-              <thead>
-
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                <tr>
-                  <td>1</td>
-                  <td>Dushyanth</td>
-                  <td>dush@gmail.com</td>
-                </tr>
-
-                <tr>
-                  <td>2</td>
-                  <td>Arun</td>
-                  <td>arun@gmail.com</td>
-                </tr>
-
-              </tbody>
-
-            </table>
-
-          </div>
-        )}
-
-
-
-        {/* 📈 ANALYTICS */}
-        {active === "Analytics" && (
-
-          <div style={styles.chartBox}>
-
-            <h2>Revenue Analytics</h2>
-
-            <div style={styles.chartContainer}>
-
-              <div style={{
-                ...styles.bar,
-                height: "100px"
-              }}>
-                <span>Mon</span>
-              </div>
-
-              <div style={{
-                ...styles.bar,
-                height: "200px"
-              }}>
-                <span>Tue</span>
-              </div>
-
-              <div style={{
-                ...styles.bar,
-                height: "150px"
-              }}>
-                <span>Wed</span>
-              </div>
-
-              <div style={{
-                ...styles.bar,
-                height: "240px"
-              }}>
-                <span>Thu</span>
-              </div>
-
-              <div style={{
-                ...styles.bar,
-                height: "180px"
-              }}>
-                <span>Fri</span>
-              </div>
-
-            </div>
-
-          </div>
         )}
 
       </div>
 
 
 
-      {/* 🔥 EDIT MODAL */}
+      {/* =====================================================
+          🔥 EDIT PRODUCT MODAL
+      ===================================================== */}
       {editId && (
 
         <div style={styles.modalOverlay}>
@@ -764,7 +719,7 @@ function AdminDashboard() {
 
 
 
-            {/* 🔥 NAME */}
+            {/* EDIT NAME */}
             <input
               type="text"
               placeholder="Product Name"
@@ -780,7 +735,7 @@ function AdminDashboard() {
 
 
 
-            {/* 🔥 PRICE */}
+            {/* EDIT PRICE */}
             <input
               type="number"
               placeholder="Price"
@@ -796,7 +751,7 @@ function AdminDashboard() {
 
 
 
-            {/* 🔥 STOCK */}
+            {/* EDIT STOCK */}
             <input
               type="number"
               placeholder="Stock"
@@ -812,7 +767,7 @@ function AdminDashboard() {
 
 
 
-            {/* 🔥 IMAGE */}
+            {/* EDIT IMAGE */}
             <input
               type="text"
               placeholder="Image URL"
@@ -828,31 +783,13 @@ function AdminDashboard() {
 
 
 
-            {/* 🖼 IMAGE PREVIEW */}
-            {editForm.image && (
-
-              <img
-                src={editForm.image}
-                alt="preview"
-                width="120"
-                height="120"
-                style={{
-                  objectFit: "cover",
-                  borderRadius: "10px",
-                  marginBottom: "15px"
-                }}
-              />
-
-            )}
-
-
-
             {/* 🔥 BUTTONS */}
             <div style={{
               display: "flex",
               gap: "10px"
             }}>
 
+              {/* SAVE */}
               <button
                 style={styles.addBtn}
                 onClick={updateProduct}
@@ -862,6 +799,7 @@ function AdminDashboard() {
 
 
 
+              {/* CANCEL */}
               <button
                 style={styles.deleteBtn}
                 onClick={() =>
@@ -876,6 +814,7 @@ function AdminDashboard() {
           </div>
 
         </div>
+
       )}
 
     </div>
@@ -884,9 +823,12 @@ function AdminDashboard() {
 
 
 
+// =====================================================
 // 🎨 STYLES
+// =====================================================
 const styles = {
 
+  // MAIN CONTAINER
   container: {
     display: "flex",
     minHeight: "100vh",
@@ -905,12 +847,14 @@ const styles = {
 
 
 
+  // LOGO
   logo: {
     marginBottom: "40px"
   },
 
 
 
+  // MENU
   menu: {
     listStyle: "none",
     padding: 0
@@ -918,6 +862,7 @@ const styles = {
 
 
 
+  // MENU ITEM
   menuItem: {
     padding: "12px",
     borderRadius: "8px",
@@ -927,6 +872,7 @@ const styles = {
 
 
 
+  // ACTIVE MENU
   activeMenu: {
     padding: "12px",
     borderRadius: "8px",
@@ -937,7 +883,7 @@ const styles = {
 
 
 
-  // MAIN
+  // MAIN CONTENT
   main: {
     flex: 1,
     padding: "30px"
@@ -945,6 +891,7 @@ const styles = {
 
 
 
+  // HEADER
   header: {
     display: "flex",
     justifyContent: "space-between",
@@ -954,6 +901,7 @@ const styles = {
 
 
 
+  // LOGOUT BUTTON
   logoutBtn: {
     padding: "10px 20px",
     border: "none",
@@ -965,88 +913,40 @@ const styles = {
 
 
 
-  // STATS
+  // DASHBOARD GRID
   statsGrid: {
     display: "grid",
     gridTemplateColumns:
       "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "20px",
-    marginBottom: "40px"
+    gap: "20px"
   },
 
 
 
+  // CARD
   card: {
     background: "#fff",
     padding: "25px",
     borderRadius: "15px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.1)"
+    boxShadow:
+      "0 5px 15px rgba(0,0,0,0.1)"
   },
 
 
 
-  // CHART
-  chartBox: {
-    background: "#fff",
-    padding: "25px",
-    borderRadius: "15px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.1)"
-  },
-
-
-
-  chartContainer: {
-    display: "flex",
-    alignItems: "flex-end",
-    gap: "20px",
-    height: "250px",
-    marginTop: "20px"
-  },
-
-
-
-  bar: {
-    width: "60px",
-    background: "#6c63ff",
-    borderRadius: "10px 10px 0 0",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "flex-end",
-    color: "#fff",
-    paddingBottom: "10px"
-  },
-
-
-
-  // TABLE
-  tableBox: {
-    background: "#fff",
-    padding: "25px",
-    borderRadius: "15px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.1)"
-  },
-
-
-
-  table: {
-    width: "100%",
-    marginTop: "20px",
-    borderCollapse: "collapse"
-  },
-
-
-
-  // FORM
+  // FORM BOX
   formBox: {
     background: "#fff",
     padding: "25px",
     borderRadius: "15px",
     marginBottom: "30px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.1)"
+    boxShadow:
+      "0 5px 15px rgba(0,0,0,0.1)"
   },
 
 
 
+  // INPUT
   input: {
     width: "100%",
     padding: "12px",
@@ -1059,6 +959,7 @@ const styles = {
 
 
 
+  // ADD BUTTON
   addBtn: {
     padding: "12px 20px",
     border: "none",
@@ -1070,6 +971,7 @@ const styles = {
 
 
 
+  // EDIT BUTTON
   editBtn: {
     padding: "8px 14px",
     border: "none",
@@ -1082,6 +984,7 @@ const styles = {
 
 
 
+  // DELETE BUTTON
   deleteBtn: {
     padding: "8px 14px",
     border: "none",
@@ -1093,14 +996,56 @@ const styles = {
 
 
 
-  // MODAL
+  // TABLE BOX
+  tableBox: {
+    background: "#fff",
+    padding: "25px",
+    borderRadius: "15px",
+    boxShadow:
+      "0 5px 15px rgba(0,0,0,0.1)",
+    overflowX: "auto"
+  },
+
+
+
+  // TABLE
+  table: {
+    width: "100%",
+    marginTop: "20px",
+    borderCollapse: "collapse"
+  },
+
+
+
+  // TABLE HEADER
+  th: {
+    padding: "15px",
+    textAlign: "left",
+    background: "#f3f4f6",
+    borderBottom: "2px solid #ddd",
+    fontSize: "15px"
+  },
+
+
+
+  // TABLE DATA
+  td: {
+    padding: "15px",
+    borderBottom: "1px solid #eee",
+    verticalAlign: "middle"
+  },
+
+
+
+  // MODAL OVERLAY
   modalOverlay: {
     position: "fixed",
     top: 0,
     left: 0,
     width: "100%",
     height: "100%",
-    background: "rgba(0,0,0,0.5)",
+    background:
+      "rgba(0,0,0,0.5)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center"
@@ -1108,14 +1053,21 @@ const styles = {
 
 
 
+  // MODAL BOX
   modal: {
     background: "#fff",
     padding: "30px",
     borderRadius: "15px",
     width: "400px",
-    boxShadow: "0 5px 20px rgba(0,0,0,0.2)"
+    boxShadow:
+      "0 5px 20px rgba(0,0,0,0.2)"
   }
 
 };
 
+
+
+// =====================================================
+// 🔥 EXPORT COMPONENT
+// =====================================================
 export default AdminDashboard;
