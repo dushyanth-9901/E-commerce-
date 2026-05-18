@@ -14,7 +14,16 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Auth />} />
+       <Route
+          path="/"
+          element={
+            <Dashboard
+              cart={cart}
+              setCart={setCart}
+            />
+          }
+        />
+        <Route path="/login" element={<Auth />} />
 
         <Route
           path="/dashboard"
