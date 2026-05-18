@@ -1,10 +1,11 @@
-// 📁 src/pages/Dashboard.jsx
+
 
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
 import SearchBar from "../components/SearchBar";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Dashboard({ cart }) {
 
@@ -50,96 +51,48 @@ function Dashboard({ cart }) {
 
 
 
-  // 🔥 LOAD PRODUCTS
+  // 🔥 LOAD PRODUCTS FROM BACKEND
   useEffect(() => {
 
-    let savedProducts = [];
-
-
-
-    // 🔥 SAFE JSON PARSE
-    try {
-
-      savedProducts = JSON.parse(
-        localStorage.getItem("products")
-      );
-
-    } catch {
-
-      savedProducts = [];
-
-    }
-
-
-
-    // ✅ IF PRODUCTS EXIST
-    if (
-      savedProducts &&
-      savedProducts.length > 0
-    ) {
-
-      setProducts(savedProducts);
-
-    } else {
-
-      // 🔥 DEFAULT PRODUCTS
-      const defaultProducts = [
-
-        {
-          id: 1,
-          name: "iPhone 15",
-          price: 80000,
-          stock: 25,
-          image:
-            "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9",
-          description:
-            "Latest Apple iPhone with premium features."
-        },
-
-        {
-          id: 2,
-          name: "Samsung S24",
-          price: 70000,
-          stock: 18,
-          image:
-            "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf",
-          description:
-            "Powerful Samsung flagship smartphone."
-        },
-
-        {
-          id: 3,
-          name: "MacBook Pro",
-          price: 120000,
-          stock: 12,
-          image:
-            "https://images.unsplash.com/photo-1517336714739-489689fd1ca8",
-          description:
-            "Apple MacBook for professionals."
-        }
-
-      ];
-
-
-
-      // 🔥 SAVE DEFAULT PRODUCTS
-      localStorage.setItem(
-        "products",
-        JSON.stringify(defaultProducts)
-      );
-
-
-
-      setProducts(defaultProducts);
-
-    }
-
-
-
-    // 🔥 STOP LOADING
-    setLoading(false);
+    fetchProducts();
 
   }, []);
+
+
+
+
+  // 🔥 FETCH PRODUCTS
+  const fetchProducts = async () => {
+
+    try {
+
+      // 🔥 GET PRODUCTS FROM BACKEND
+      const res = await axios.get(
+        "http://localhost:5000/api/products"
+      );
+
+
+
+      // 🔥 SAVE PRODUCTS
+      setProducts(res.data);
+
+
+
+      // 🔥 STOP LOADING
+      setLoading(false);
+
+    } catch (error) {
+
+      console.log(error);
+
+
+
+      // ❌ STOP LOADING EVEN IF ERROR
+      setLoading(false);
+
+    }
+
+  };
 
 
 

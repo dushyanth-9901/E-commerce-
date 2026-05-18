@@ -1,8 +1,11 @@
-// 📁 AdminDashboard.jsx
+// 📁 src/pages/AdminDashboard.jsx
 
-// 🔥 IMPORT REACT HOOKS
+// =====================================================
+// 🔥 IMPORTS
+// =====================================================
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 function AdminDashboard() {
 
@@ -14,7 +17,7 @@ function AdminDashboard() {
 
 
   // =====================================================
-  // 🔥 ACTIVE SIDEBAR MENU
+  // 🔥 ACTIVE SIDEBAR
   // =====================================================
   const [active, setActive] =
     useState("Dashboard");
@@ -24,71 +27,14 @@ function AdminDashboard() {
   // =====================================================
   // 🔥 PRODUCTS STATE
   // =====================================================
-  // 👉 Load products from localStorage
-  // 👉 If empty, use default products
-  // =====================================================
-  const [products, setProducts] = useState(() => {
+  const [products, setProducts] =
+    useState([]);
 
-    // 🔥 GET SAVED PRODUCTS
-    const savedProducts =
-      localStorage.getItem("products");
-
-
-
-    // 🔥 RETURN SAVED OR DEFAULT PRODUCTS
-    return savedProducts
-      ? JSON.parse(savedProducts)
-      : [
-
-          {
-            id: 1,
-            name: "iPhone 15",
-            stock: 25,
-            price: 80000,
-            image:
-              "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"
-          },
-
-          {
-            id: 2,
-            name: "Samsung S24",
-            stock: 18,
-            price: 70000,
-            image:
-              "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf"
-          },
-
-          {
-            id: 3,
-            name: "MacBook Pro",
-            stock: 12,
-            price: 120000,
-            image:
-              "https://images.unsplash.com/photo-1517336714739-489689fd1ca8"
-          }
-
-        ];
-
-  });
 
 
 
   // =====================================================
-  // 🔥 SAVE PRODUCTS TO LOCAL STORAGE
-  // =====================================================
-  useEffect(() => {
-
-    localStorage.setItem(
-      "products",
-      JSON.stringify(products)
-    );
-
-  }, [products]);
-
-
-
-  // =====================================================
-  // 🔥 ADD PRODUCT FORM STATE
+  // 🔥 ADD PRODUCT FORM
   // =====================================================
   const [form, setForm] = useState({
     name: "",
@@ -99,17 +45,13 @@ function AdminDashboard() {
 
 
 
+
   // =====================================================
-  // 🔥 EDIT PRODUCT STATE
+  // 🔥 EDIT PRODUCT STATES
   // =====================================================
   const [editId, setEditId] =
     useState(null);
 
-
-
-  // =====================================================
-  // 🔥 EDIT FORM STATE
-  // =====================================================
   const [editForm, setEditForm] =
     useState({
       name: "",
@@ -120,30 +62,71 @@ function AdminDashboard() {
 
 
 
+
   // =====================================================
-  // 🔐 ADMIN PAGE PROTECTION
+  // 🔐 ADMIN PROTECTION
   // =====================================================
   useEffect(() => {
 
-    // 🔥 CHECK ADMIN LOGIN
     const isAdmin =
       localStorage.getItem("isAdmin");
 
 
 
-    // ❌ REDIRECT IF NOT ADMIN
+    // ❌ IF NOT ADMIN
     if (!isAdmin) {
+
       navigate("/admin");
+
     }
 
   }, [navigate]);
 
 
 
+
   // =====================================================
-  // 🔥 ADD PRODUCT FUNCTION
+  // 🔥 LOAD PRODUCTS
   // =====================================================
-  const addProduct = () => {
+  useEffect(() => {
+
+    fetchProducts();
+
+  }, []);
+
+
+
+
+  // =====================================================
+  // 🔥 FETCH PRODUCTS FROM BACKEND
+  // =====================================================
+  const fetchProducts = async () => {
+
+    try {
+
+      const res = await axios.get(
+        "http://localhost:5000/api/products"
+      );
+
+      setProducts(res.data);
+
+    } catch (error) {
+
+      console.log(error);
+
+      alert("Failed To Load Products");
+
+    }
+
+  };
+
+
+
+
+  // =====================================================
+  // 🔥 ADD PRODUCT
+  // =====================================================
+  const addProduct = async () => {
 
     // ❌ VALIDATION
     if (
@@ -152,74 +135,102 @@ function AdminDashboard() {
       !form.stock ||
       !form.image
     ) {
+
       alert("Fill all fields");
+
       return;
+
     }
 
 
 
-    // 🔥 CREATE NEW PRODUCT
-    const newProduct = {
-      id: Date.now(),
-      name: form.name,
-      price: form.price,
-      stock: form.stock,
-      image: form.image
-    };
+    try {
 
+      // 🔥 SEND PRODUCT TO BACKEND
+      await axios.post(
 
+        "http://localhost:5000/api/products",
 
-    // 🔥 UPDATE PRODUCTS
-    setProducts([
-      ...products,
-      newProduct
-    ]);
+        {
+          name: form.name,
+          price: Number(form.price),
+          stock: Number(form.stock),
+          image: form.image,
+          description: "New Product"
+        }
 
-
-
-    // 🔥 CLEAR FORM
-    setForm({
-      name: "",
-      price: "",
-      stock: "",
-      image: ""
-    });
-
-  };
-
-
-
-  // =====================================================
-  // 🔥 DELETE PRODUCT FUNCTION
-  // =====================================================
-  const deleteProduct = (id) => {
-
-    // 🔥 FILTER PRODUCTS
-    const filteredProducts =
-      products.filter(
-        (item) => item.id !== id
       );
 
 
 
-    // 🔥 UPDATE STATE
-    setProducts(filteredProducts);
+      // 🔥 REFRESH PRODUCTS
+      fetchProducts();
+
+
+
+      // 🔥 CLEAR FORM
+      setForm({
+        name: "",
+        price: "",
+        stock: "",
+        image: ""
+      });
+
+
+
+      alert("✅ Product Added");
+
+    } catch (error) {
+
+      console.log(error);
+
+      alert("❌ Failed To Add Product");
+
+    }
 
   };
 
 
 
+
   // =====================================================
-  // 🔥 EDIT PRODUCT FUNCTION
+  // 🔥 DELETE PRODUCT
+  // =====================================================
+  const deleteProduct = async (id) => {
+
+    try {
+
+      await axios.delete(
+        `http://localhost:5000/api/products/${id}`
+      );
+
+
+
+      // 🔥 REFRESH PRODUCTS
+      fetchProducts();
+
+      alert("✅ Product Deleted");
+
+    } catch (error) {
+
+      console.log(error);
+
+      alert("Delete Failed");
+
+    }
+
+  };
+
+
+
+
+  // =====================================================
+  // 🔥 EDIT PRODUCT
   // =====================================================
   const editProduct = (product) => {
 
-    // 🔥 STORE PRODUCT ID
     setEditId(product.id);
 
-
-
-    // 🔥 FILL EDIT FORM
     setEditForm({
       name: product.name,
       price: product.price,
@@ -231,49 +242,61 @@ function AdminDashboard() {
 
 
 
+
   // =====================================================
-  // 🔥 UPDATE PRODUCT FUNCTION
+  // 🔥 UPDATE PRODUCT
   // =====================================================
-  const updateProduct = () => {
+  const updateProduct = async () => {
 
-    // 🔥 UPDATE MATCHING PRODUCT
-    const updatedProducts =
-      products.map((item) => {
+    try {
 
-        if (item.id === editId) {
+      await axios.put(
 
-          return {
-            ...item,
-            ...editForm
-          };
+        `http://localhost:5000/api/products/${editId}`,
 
+        {
+          name: editForm.name,
+          price: Number(editForm.price),
+          stock: Number(editForm.stock),
+          image: editForm.image
         }
 
-        return item;
+      );
 
+
+
+      // 🔥 REFRESH PRODUCTS
+      fetchProducts();
+
+
+
+      // 🔥 CLOSE MODAL
+      setEditId(null);
+
+
+
+      // 🔥 RESET FORM
+      setEditForm({
+        name: "",
+        price: "",
+        stock: "",
+        image: ""
       });
 
 
 
-    // 🔥 UPDATE STATE
-    setProducts(updatedProducts);
+      alert("✅ Product Updated");
 
+    } catch (error) {
 
+      console.log(error);
 
-    // 🔥 CLOSE MODAL
-    setEditId(null);
+      alert("Update Failed");
 
-
-
-    // 🔥 RESET FORM
-    setEditForm({
-      name: "",
-      price: "",
-      stock: "",
-      image: ""
-    });
+    }
 
   };
+
 
 
 
@@ -283,8 +306,8 @@ function AdminDashboard() {
   const stats = [
 
     {
-      title: "Total Sales",
-      value: "₹ 4,50,000"
+      title: "Total Products",
+      value: products.length
     },
 
     {
@@ -293,12 +316,12 @@ function AdminDashboard() {
     },
 
     {
-      title: "Stock Available",
-      value: products.length
+      title: "Revenue",
+      value: "₹ 4,50,000"
     },
 
     {
-      title: "Total Users",
+      title: "Users",
       value: "860"
     }
 
@@ -306,8 +329,9 @@ function AdminDashboard() {
 
 
 
+
   // =====================================================
-  // 🔥 RETURN UI
+  // 🔥 UI
   // =====================================================
   return (
 
@@ -318,14 +342,12 @@ function AdminDashboard() {
       ===================================================== */}
       <div style={styles.sidebar}>
 
-        {/* 🔥 LOGO */}
         <h2 style={styles.logo}>
           Admin Panel
         </h2>
 
 
 
-        {/* 🔥 MENU */}
         <ul style={styles.menu}>
 
           {/* DASHBOARD */}
@@ -344,22 +366,6 @@ function AdminDashboard() {
 
 
 
-          {/* ORDERS */}
-          <li
-            onClick={() =>
-              setActive("Orders")
-            }
-            style={
-              active === "Orders"
-                ? styles.activeMenu
-                : styles.menuItem
-            }
-          >
-            Orders
-          </li>
-
-
-
           {/* PRODUCTS */}
           <li
             onClick={() =>
@@ -372,6 +378,22 @@ function AdminDashboard() {
             }
           >
             Products
+          </li>
+
+
+
+          {/* ORDERS */}
+          <li
+            onClick={() =>
+              setActive("Orders")
+            }
+            style={
+              active === "Orders"
+                ? styles.activeMenu
+                : styles.menuItem
+            }
+          >
+            Orders
           </li>
 
 
@@ -412,6 +434,7 @@ function AdminDashboard() {
 
 
 
+
       {/* =====================================================
           🔥 MAIN CONTENT
       ===================================================== */}
@@ -420,22 +443,19 @@ function AdminDashboard() {
         {/* 🔥 HEADER */}
         <div style={styles.header}>
 
-          {/* 🔥 ACTIVE PAGE TITLE */}
           <h1>{active}</h1>
 
 
 
-          {/* 🔥 LOGOUT BUTTON */}
+          {/* 🔥 LOGOUT */}
           <button
             style={styles.logoutBtn}
             onClick={() => {
 
-              // 🔥 REMOVE ADMIN LOGIN
               localStorage.removeItem(
                 "isAdmin"
               );
 
-              // 🔥 REDIRECT
               navigate("/admin");
 
             }}
@@ -447,8 +467,9 @@ function AdminDashboard() {
 
 
 
+
         {/* =====================================================
-            📊 DASHBOARD SECTION
+            📊 DASHBOARD
         ===================================================== */}
         {active === "Dashboard" && (
 
@@ -475,6 +496,8 @@ function AdminDashboard() {
 
 
 
+
+
         {/* =====================================================
             📦 PRODUCTS SECTION
         ===================================================== */}
@@ -482,14 +505,13 @@ function AdminDashboard() {
 
           <div>
 
-            {/* 🔥 ADD PRODUCT FORM */}
+            {/* 🔥 ADD PRODUCT */}
             <div style={styles.formBox}>
 
               <h2>Add Product</h2>
 
 
 
-              {/* PRODUCT NAME */}
               <input
                 type="text"
                 placeholder="Product Name"
@@ -505,7 +527,6 @@ function AdminDashboard() {
 
 
 
-              {/* PRODUCT PRICE */}
               <input
                 type="number"
                 placeholder="Price"
@@ -521,7 +542,6 @@ function AdminDashboard() {
 
 
 
-              {/* PRODUCT STOCK */}
               <input
                 type="number"
                 placeholder="Stock"
@@ -537,7 +557,6 @@ function AdminDashboard() {
 
 
 
-              {/* PRODUCT IMAGE */}
               <input
                 type="text"
                 placeholder="Image URL"
@@ -572,7 +591,6 @@ function AdminDashboard() {
 
 
 
-              {/* 🔥 ADD BUTTON */}
               <button
                 style={styles.addBtn}
                 onClick={addProduct}
@@ -581,6 +599,7 @@ function AdminDashboard() {
               </button>
 
             </div>
+
 
 
 
@@ -593,36 +612,42 @@ function AdminDashboard() {
 
               <table style={styles.table}>
 
-                {/* TABLE HEAD */}
                 <thead>
 
                   <tr>
-                    <th style={styles.th}>ID</th>
-                    <th style={styles.th}>Image</th>
-                    <th style={styles.th}>Name</th>
-                    <th style={styles.th}>Price</th>
-                    <th style={styles.th}>Stock</th>
-                    <th style={styles.th}>Actions</th>
+
+                    <th style={styles.th}>
+                      Image
+                    </th>
+
+                    <th style={styles.th}>
+                      Name
+                    </th>
+
+                    <th style={styles.th}>
+                      Price
+                    </th>
+
+                    <th style={styles.th}>
+                      Stock
+                    </th>
+
+                    <th style={styles.th}>
+                      Actions
+                    </th>
+
                   </tr>
 
                 </thead>
 
 
 
-                {/* TABLE BODY */}
                 <tbody>
 
                   {products.map((item) => (
 
                     <tr key={item.id}>
 
-                      <td style={styles.td}>
-                        {item.id}
-                      </td>
-
-
-
-                      {/* PRODUCT IMAGE */}
                       <td style={styles.td}>
 
                         <img
@@ -631,8 +656,8 @@ function AdminDashboard() {
                           width="60"
                           height="60"
                           style={{
-                            borderRadius: "10px",
-                            objectFit: "cover"
+                            objectFit: "cover",
+                            borderRadius: "10px"
                           }}
                         />
 
@@ -640,31 +665,26 @@ function AdminDashboard() {
 
 
 
-                      {/* PRODUCT NAME */}
                       <td style={styles.td}>
                         {item.name}
                       </td>
 
 
 
-                      {/* PRODUCT PRICE */}
                       <td style={styles.td}>
                         ₹ {item.price}
                       </td>
 
 
 
-                      {/* PRODUCT STOCK */}
                       <td style={styles.td}>
                         {item.stock}
                       </td>
 
 
 
-                      {/* ACTION BUTTONS */}
                       <td style={styles.td}>
 
-                        {/* EDIT BUTTON */}
                         <button
                           style={styles.editBtn}
                           onClick={() =>
@@ -676,7 +696,6 @@ function AdminDashboard() {
 
 
 
-                        {/* DELETE BUTTON */}
                         <button
                           style={styles.deleteBtn}
                           onClick={() =>
@@ -702,12 +721,135 @@ function AdminDashboard() {
 
         )}
 
+
+
+
+
+        {/* =====================================================
+            🛒 ORDERS
+        ===================================================== */}
+        {active === "Orders" && (
+
+          <div style={styles.card}>
+
+            <h2>Recent Orders</h2>
+
+            <table style={styles.table}>
+
+              <thead>
+
+                <tr>
+                  <th style={styles.th}>Order ID</th>
+                  <th style={styles.th}>Customer</th>
+                  <th style={styles.th}>Amount</th>
+                  <th style={styles.th}>Status</th>
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                <tr>
+                  <td style={styles.td}>#1001</td>
+                  <td style={styles.td}>Dushyanth</td>
+                  <td style={styles.td}>₹ 80,000</td>
+                  <td style={styles.td}>Delivered</td>
+                </tr>
+
+                <tr>
+                  <td style={styles.td}>#1002</td>
+                  <td style={styles.td}>Rahul</td>
+                  <td style={styles.td}>₹ 45,000</td>
+                  <td style={styles.td}>Pending</td>
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        )}
+
+
+
+
+
+        {/* =====================================================
+            👥 USERS
+        ===================================================== */}
+        {active === "Users" && (
+
+          <div style={styles.card}>
+
+            <h2>Users List</h2>
+
+            <table style={styles.table}>
+
+              <thead>
+
+                <tr>
+                  <th style={styles.th}>ID</th>
+                  <th style={styles.th}>Name</th>
+                  <th style={styles.th}>Email</th>
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                <tr>
+                  <td style={styles.td}>1</td>
+                  <td style={styles.td}>Dushyanth</td>
+                  <td style={styles.td}>dush@gmail.com</td>
+                </tr>
+
+                <tr>
+                  <td style={styles.td}>2</td>
+                  <td style={styles.td}>Rahul</td>
+                  <td style={styles.td}>rahul@gmail.com</td>
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        )}
+
+
+
+
+
+        {/* =====================================================
+            📈 ANALYTICS
+        ===================================================== */}
+        {active === "Analytics" && (
+
+          <div style={styles.card}>
+
+            <h2>Analytics</h2>
+
+            <p>Total Revenue Growth 🚀</p>
+
+            <div style={styles.analyticsBox}>
+
+              <div style={styles.analyticsBar}></div>
+
+            </div>
+
+          </div>
+
+        )}
+
       </div>
 
 
 
+
       {/* =====================================================
-          🔥 EDIT PRODUCT MODAL
+          🔥 EDIT MODAL
       ===================================================== */}
       {editId && (
 
@@ -719,7 +861,6 @@ function AdminDashboard() {
 
 
 
-            {/* EDIT NAME */}
             <input
               type="text"
               placeholder="Product Name"
@@ -735,7 +876,6 @@ function AdminDashboard() {
 
 
 
-            {/* EDIT PRICE */}
             <input
               type="number"
               placeholder="Price"
@@ -751,7 +891,6 @@ function AdminDashboard() {
 
 
 
-            {/* EDIT STOCK */}
             <input
               type="number"
               placeholder="Stock"
@@ -767,7 +906,6 @@ function AdminDashboard() {
 
 
 
-            {/* EDIT IMAGE */}
             <input
               type="text"
               placeholder="Image URL"
@@ -783,23 +921,22 @@ function AdminDashboard() {
 
 
 
-            {/* 🔥 BUTTONS */}
-            <div style={{
-              display: "flex",
-              gap: "10px"
-            }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "10px"
+              }}
+            >
 
-              {/* SAVE */}
               <button
                 style={styles.addBtn}
                 onClick={updateProduct}
               >
-                Save Changes
+                Save
               </button>
 
 
 
-              {/* CANCEL */}
               <button
                 style={styles.deleteBtn}
                 onClick={() =>
@@ -818,8 +955,11 @@ function AdminDashboard() {
       )}
 
     </div>
+
   );
+
 }
+
 
 
 
@@ -828,7 +968,6 @@ function AdminDashboard() {
 // =====================================================
 const styles = {
 
-  // MAIN CONTAINER
   container: {
     display: "flex",
     minHeight: "100vh",
@@ -837,7 +976,6 @@ const styles = {
 
 
 
-  // SIDEBAR
   sidebar: {
     width: "250px",
     background: "#111827",
@@ -847,14 +985,12 @@ const styles = {
 
 
 
-  // LOGO
   logo: {
     marginBottom: "40px"
   },
 
 
 
-  // MENU
   menu: {
     listStyle: "none",
     padding: 0
@@ -862,7 +998,6 @@ const styles = {
 
 
 
-  // MENU ITEM
   menuItem: {
     padding: "12px",
     borderRadius: "8px",
@@ -872,7 +1007,6 @@ const styles = {
 
 
 
-  // ACTIVE MENU
   activeMenu: {
     padding: "12px",
     borderRadius: "8px",
@@ -883,7 +1017,6 @@ const styles = {
 
 
 
-  // MAIN CONTENT
   main: {
     flex: 1,
     padding: "30px"
@@ -891,7 +1024,6 @@ const styles = {
 
 
 
-  // HEADER
   header: {
     display: "flex",
     justifyContent: "space-between",
@@ -901,7 +1033,6 @@ const styles = {
 
 
 
-  // LOGOUT BUTTON
   logoutBtn: {
     padding: "10px 20px",
     border: "none",
@@ -913,7 +1044,6 @@ const styles = {
 
 
 
-  // DASHBOARD GRID
   statsGrid: {
     display: "grid",
     gridTemplateColumns:
@@ -923,7 +1053,6 @@ const styles = {
 
 
 
-  // CARD
   card: {
     background: "#fff",
     padding: "25px",
@@ -934,34 +1063,27 @@ const styles = {
 
 
 
-  // FORM BOX
   formBox: {
     background: "#fff",
     padding: "25px",
     borderRadius: "15px",
-    marginBottom: "30px",
-    boxShadow:
-      "0 5px 15px rgba(0,0,0,0.1)"
+    marginBottom: "30px"
   },
 
 
 
-  // INPUT
   input: {
     width: "100%",
     padding: "12px",
     marginBottom: "15px",
     borderRadius: "8px",
-    border: "1px solid #ccc",
-    outline: "none",
-    boxSizing: "border-box"
+    border: "1px solid #ccc"
   },
 
 
 
-  // ADD BUTTON
   addBtn: {
-    padding: "12px 20px",
+    padding: "10px 20px",
     border: "none",
     background: "#6c63ff",
     color: "#fff",
@@ -971,7 +1093,6 @@ const styles = {
 
 
 
-  // EDIT BUTTON
   editBtn: {
     padding: "8px 14px",
     border: "none",
@@ -984,7 +1105,6 @@ const styles = {
 
 
 
-  // DELETE BUTTON
   deleteBtn: {
     padding: "8px 14px",
     border: "none",
@@ -996,48 +1116,56 @@ const styles = {
 
 
 
-  // TABLE BOX
   tableBox: {
     background: "#fff",
     padding: "25px",
     borderRadius: "15px",
-    boxShadow:
-      "0 5px 15px rgba(0,0,0,0.1)",
     overflowX: "auto"
   },
 
 
 
-  // TABLE
   table: {
     width: "100%",
-    marginTop: "20px",
     borderCollapse: "collapse"
   },
 
 
 
-  // TABLE HEADER
   th: {
     padding: "15px",
     textAlign: "left",
-    background: "#f3f4f6",
-    borderBottom: "2px solid #ddd",
-    fontSize: "15px"
+    background: "#f3f4f6"
   },
 
 
 
-  // TABLE DATA
   td: {
     padding: "15px",
-    borderBottom: "1px solid #eee",
-    verticalAlign: "middle"
+    borderBottom: "1px solid #eee"
   },
 
 
 
-  // MODAL OVERLAY
+  analyticsBox: {
+    width: "100%",
+    height: "20px",
+    background: "#ddd",
+    borderRadius: "20px",
+    marginTop: "20px",
+    overflow: "hidden"
+  },
+
+
+
+  analyticsBar: {
+    width: "75%",
+    height: "100%",
+    background: "#6c63ff"
+  },
+
+
+
   modalOverlay: {
     position: "fixed",
     top: 0,
@@ -1053,21 +1181,13 @@ const styles = {
 
 
 
-  // MODAL BOX
   modal: {
     background: "#fff",
     padding: "30px",
     borderRadius: "15px",
-    width: "400px",
-    boxShadow:
-      "0 5px 20px rgba(0,0,0,0.2)"
+    width: "400px"
   }
 
 };
 
-
-
-// =====================================================
-// 🔥 EXPORT COMPONENT
-// =====================================================
 export default AdminDashboard;
