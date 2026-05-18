@@ -30,27 +30,6 @@ function Dashboard({ cart }) {
 
 
 
-
-  // 🔐 PROTECT PAGE
-  useEffect(() => {
-
-    const isLoggedIn =
-      localStorage.getItem("isLoggedIn");
-
-
-
-    // ❌ IF NOT LOGGED IN
-    if (!isLoggedIn) {
-
-      navigate("/");
-
-    }
-
-  }, [navigate]);
-
-
-
-
   // 🔥 LOAD PRODUCTS FROM BACKEND
   useEffect(() => {
 
