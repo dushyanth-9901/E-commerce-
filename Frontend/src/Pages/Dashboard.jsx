@@ -6,6 +6,7 @@ import ProductCard from "../components/ProductCard";
 import SearchBar from "../components/SearchBar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import Footer from "../components/Footer";
 
 function Dashboard({ cart }) {
 
@@ -133,7 +134,7 @@ function Dashboard({ cart }) {
 
 
         {/* 🔥 SEARCH BAR */}
-        <SearchBar setSearch={setSearch} />
+         <SearchBar setSearch={setSearch} />
 
 
 
@@ -160,6 +161,7 @@ function Dashboard({ cart }) {
           )}
 
         </div>
+        <Footer />
 
       </div>
 
