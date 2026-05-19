@@ -4,77 +4,85 @@ import { useNavigate } from "react-router-dom";
 function Navbar({ cart }) {
 
   const navigate = useNavigate();
-  const isLoggedIn =
-  localStorage.getItem("isLoggedIn");
 
-  // 🔓 Logout
+  // 🔥 CHECK LOGIN
+  const isLoggedIn =
+    localStorage.getItem("isLoggedIn");
+
+
+
+  // 🔓 LOGOUT FUNCTION
   const logout = () => {
+
     localStorage.removeItem("isLoggedIn");
-    navigate("/");
+
+    navigate("/dashboard");
+
   };
 
+
+
   return (
+
     <div style={styles.navbar}>
 
-      {/* 🔹 Logo */}
-      <h2 style={styles.logo}>ShopZone 🛒</h2>
+      {/* 🔹 LOGO */}
+      <h2 style={styles.logo}>
+        ShopZone 🛒
+      </h2>
 
-      {/* 🔹 Right Side */}
+
+
+      {/* 🔹 RIGHT SIDE */}
       <div style={styles.right}>
 
-           {/* 🔹 Login/Logout Button */}
-                  {
-            isLoggedIn ? (
+        {/* 🔹 LOGIN / LOGOUT */}
+        {isLoggedIn ? (
 
-              <button
-                style={styles.logoutBtn}
-                onClick={() => {
+          <button
+            type = "button"
+            style={styles.logoutBtn}
+            onClick={logout}
+          >
+            Logout
+          </button>
 
-                  localStorage.removeItem(
-                    "isLoggedIn"
-                  );
+        ) : (
 
-                  window.location.reload();
+          <button
+            type = "button"
+            style={styles.loginBtn}
+            onClick={() =>
+              navigate("/login")
+            }
+          >
+            Login
+          </button>
 
-                }}
-              >
-                Logout
-              </button>
+        )}
 
-            ) : (
 
-              <button
-                style={styles.loginBtn}
-                onClick={() =>
-                  navigate("/login")
-                }
-              >
-                Login
-              </button>
 
-            )
+        {/* 🔹 CART BUTTON */}
+        <button
+          type = "button"
+          style={styles.cartBtn}
+          onClick={() =>
+            navigate("/cart")
           }
-
-            {/* 🔹 Logout */}
-            <button
-              style={styles.logoutBtn}
-              onClick={logout}
-            >
-              Logout
-            </button>
-        
-              {/* 🔹 Cart Button */}
-              <button
-                style={styles.cartBtn}
-                onClick={() => navigate("/cart")}
-              >
-                Cart ({cart.length})
-              </button>
+        >
+          Cart ({cart.length})
+        </button>
 
       </div>
+
     </div>
+
   );
+
 }
+
+
 
 const styles = {
 
@@ -86,17 +94,25 @@ const styles = {
     background: "#111",
     color: "white",
     position: "sticky",
-    top: 0
+    top: 0,
+    zIndex: 1000
   },
+
+
 
   logo: {
     margin: 0
   },
 
+
+
   right: {
     display: "flex",
-    gap: "10px"
+    gap: "10px",
+    alignItems: "center"
   },
+
+
 
   cartBtn: {
     padding: "10px 15px",
@@ -104,8 +120,11 @@ const styles = {
     borderRadius: "8px",
     cursor: "pointer",
     background: "#667eea",
-    color: "white"
+    color: "white",
+    fontWeight: "bold"
   },
+
+
 
   logoutBtn: {
     padding: "10px 15px",
@@ -113,27 +132,22 @@ const styles = {
     borderRadius: "8px",
     cursor: "pointer",
     background: "crimson",
-    color: "white"
+    color: "white",
+    fontWeight: "bold"
   },
-  loginBtn: {
-  padding: "10px 18px",
-  border: "none",
-  background: "#6c63ff",
-  color: "#fff",
-  borderRadius: "8px",
-  cursor: "pointer",
-  marginLeft: "15px"
-},
 
-// logoutBtn: {
-//   padding: "10px 18px",
-//   border: "none",
-//   background: "crimson",
-//   color: "#fff",
-//   borderRadius: "8px",
-//   cursor: "pointer",
-//   marginLeft: "15px"
-// },
+
+
+  loginBtn: {
+    padding: "10px 15px",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    background: "#22c55e",
+    color: "white",
+    fontWeight: "bold"
+  }
+
 };
 
 export default Navbar;

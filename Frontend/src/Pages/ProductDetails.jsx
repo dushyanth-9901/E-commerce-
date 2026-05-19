@@ -1,100 +1,246 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import products from "../data/products";
+// 📁 src/pages/ProductDetails.jsx
 
-function ProductDetails({ cart, setCart }) {
+import {
+  useParams,
+  useNavigate
+} from "react-router-dom";
 
+import {
+  useEffect,
+  useState
+} from "react";
+
+import axios from "axios";
+
+function ProductDetails({
+  cart,
+  setCart
+}) {
+
+  // =====================================================
   // 🔥 GET PRODUCT ID
+  // =====================================================
   const { id } = useParams();
 
+
+
+  // =====================================================
   // 🔥 NAVIGATION
+  // =====================================================
   const navigate = useNavigate();
 
-  // 🔥 QUANTITY
-  const [qty, setQty] = useState(1);
 
-  // 🔐 PROTECT PAGE
+
+  // =====================================================
+  // 🔥 PRODUCT STATE
+  // =====================================================
+  const [product, setProduct] =
+    useState(null);
+
+
+
+  // =====================================================
+  // 🔥 QUANTITY STATE
+  // =====================================================
+  const [qty, setQty] =
+    useState(1);
+
+
+
+
+  // =====================================================
+  // 🔥 FETCH PRODUCT FROM BACKEND
+  // =====================================================
   useEffect(() => {
 
-    const isLoggedIn =
-      localStorage.getItem("isLoggedIn");
+    const fetchProduct = async () => {
 
-    if (!isLoggedIn) {
-      navigate("/");
-    }
+      try {
 
-  }, [navigate]);
-
-
-
-  // 🔥 FIND PRODUCT
-  const product = products.find(
-    (p) => p.id === Number(id)
-  );
+        // 🔥 GET PRODUCTS FROM BACKEND
+        const res = await axios.get(
+          "http://localhost:5000/api/products"
+        );
 
 
 
-  // ❌ PRODUCT NOT FOUND
+        // 🔥 FIND PRODUCT
+        const foundProduct =
+          res.data.find(
+            (item) =>
+              item.id === Number(id)
+          );
+
+
+
+        // 🔥 SAVE PRODUCT
+        setProduct(foundProduct);
+
+      } catch (error) {
+
+        console.log(error);
+
+        alert("Failed To Load Product");
+
+      }
+
+    };
+
+
+
+    fetchProduct();
+
+  }, [id]);
+
+
+
+
+  // =====================================================
+  // 🔥 LOADING SCREEN
+  // =====================================================
   if (!product) {
+
     return (
-      <h2 style={{ padding: "20px" }}>
-        Product Not Found
-      </h2>
+
+      <h1 style={styles.loading}>
+        Loading Product...
+      </h1>
+
     );
+
   }
 
 
 
+
+  // =====================================================
   // 🛒 ADD TO CART
+  // =====================================================
   const addToCart = () => {
 
+    // 🔥 CHECK LOGIN FIRST
+    const isLoggedIn =
+      localStorage.getItem("isLoggedIn");
+
+
+
+    // ❌ IF NOT LOGGED IN
+    if (!isLoggedIn) {
+
+      alert("Please Login First");
+
+      // 🔥 REDIRECT LOGIN PAGE
+      navigate("/login");
+
+      return;
+
+    }
+
+
+
+    // 🔥 CHECK EXISTING PRODUCT
     const existing = cart.find(
-      (item) => item.id === product.id
+      (item) =>
+        item.id === product.id
     );
 
-    // 🔥 IF PRODUCT ALREADY EXISTS
+
+
+    // ✅ PRODUCT ALREADY EXISTS
     if (existing) {
 
-      const updatedCart = cart.map((item) =>
-        item.id === product.id
-          ? {
-              ...item,
-              quantity: item.quantity + qty
-            }
-          : item
-      );
+      const updatedCart =
+        cart.map((item) =>
 
+          item.id === product.id
+
+            ? {
+                ...item,
+                quantity:
+                  item.quantity + qty
+              }
+
+            : item
+
+        );
+
+
+
+      // 🔥 UPDATE CART
       setCart(updatedCart);
 
     } else {
 
-      // 🔥 NEW PRODUCT
+      // ✅ NEW PRODUCT
       setCart([
+
         ...cart,
+
         {
           ...product,
           quantity: qty
         }
+
       ]);
+
     }
 
-    alert("Added To Cart ✅");
+
+
+    alert("✅ Added To Cart");
+
   };
 
 
 
+
+  // =====================================================
   // ⚡ BUY NOW
+  // =====================================================
   const buyNow = () => {
+
+    // 🔥 CHECK LOGIN
+    const isLoggedIn =
+      localStorage.getItem("isLoggedIn");
+
+
+
+    // ❌ NOT LOGGED IN
+    if (!isLoggedIn) {
+
+      alert("Please Login First");
+
+      navigate("/login");
+
+      return;
+
+    }
+
+
+
+    // 🔥 ADD PRODUCT
     addToCart();
+
+
+
+    // 🔥 GO TO CART PAGE
     navigate("/cart");
+
   };
 
 
 
+
+  // =====================================================
+  // 🔥 UI
+  // =====================================================
   return (
+
     <div style={styles.container}>
 
-      {/* LEFT SIDE IMAGE */}
+      {/* =====================================================
+          🔥 LEFT IMAGE
+      ===================================================== */}
       <div style={styles.imageBox}>
 
         <img
@@ -107,43 +253,77 @@ function ProductDetails({ cart, setCart }) {
 
 
 
-      {/* RIGHT SIDE DETAILS */}
+
+      {/* =====================================================
+          🔥 RIGHT DETAILS
+      ===================================================== */}
       <div style={styles.details}>
 
-        {/* PRODUCT NAME */}
-        <h1>{product.name}</h1>
+        {/* 🔥 PRODUCT NAME */}
+        <h1>
+          {product.name}
+        </h1>
 
-        {/* DESCRIPTION */}
+
+
+        {/* 🔥 DESCRIPTION */}
         <p style={styles.description}>
-          {product.description}
+
+          {
+            product.description
+              || "No Description"
+          }
+
         </p>
 
-        {/* PRICE */}
+
+
+        {/* 🔥 PRICE */}
         <h2 style={styles.price}>
+
           ₹ {product.price}
+
         </h2>
 
 
 
-        {/* QUANTITY */}
+
+        {/* =====================================================
+            🔥 QUANTITY SECTION
+        ===================================================== */}
         <div style={styles.qtyContainer}>
 
+          {/* 🔥 MINUS BUTTON */}
           <button
+            type="button"
             style={styles.qtyBtn}
             onClick={() =>
-              setQty(qty > 1 ? qty - 1 : 1)
+              setQty(
+                qty > 1
+                  ? qty - 1
+                  : 1
+              )
             }
           >
             -
           </button>
 
+
+
+          {/* 🔥 QUANTITY */}
           <span style={styles.qtyText}>
             {qty}
           </span>
 
+
+
+          {/* 🔥 PLUS BUTTON */}
           <button
+            type="button"
             style={styles.qtyBtn}
-            onClick={() => setQty(qty + 1)}
+            onClick={() =>
+              setQty(qty + 1)
+            }
           >
             +
           </button>
@@ -152,17 +332,26 @@ function ProductDetails({ cart, setCart }) {
 
 
 
-        {/* BUTTONS */}
+
+        {/* =====================================================
+            🔥 ACTION BUTTONS
+        ===================================================== */}
         <div style={styles.buttonContainer}>
 
+          {/* 🛒 ADD TO CART */}
           <button
+            type="button"
             style={styles.cartBtn}
             onClick={addToCart}
           >
             Add To Cart
           </button>
 
+
+
+          {/* ⚡ BUY NOW */}
           <button
+            type="button"
             style={styles.buyBtn}
             onClick={buyNow}
           >
@@ -174,13 +363,20 @@ function ProductDetails({ cart, setCart }) {
       </div>
 
     </div>
+
   );
+
 }
 
 
 
+
+// =====================================================
+// 🎨 STYLES
+// =====================================================
 const styles = {
 
+  // 🔥 MAIN CONTAINER
   container: {
     display: "flex",
     gap: "40px",
@@ -194,15 +390,18 @@ const styles = {
 
 
 
+  // 🔥 IMAGE BOX
   imageBox: {
     background: "#fff",
     padding: "20px",
     borderRadius: "15px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.1)"
+    boxShadow:
+      "0 5px 15px rgba(0,0,0,0.1)"
   },
 
 
 
+  // 🔥 PRODUCT IMAGE
   image: {
     width: "350px",
     height: "350px",
@@ -212,16 +411,19 @@ const styles = {
 
 
 
+  // 🔥 DETAILS BOX
   details: {
     maxWidth: "500px",
     background: "#fff",
     padding: "30px",
     borderRadius: "15px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.1)"
+    boxShadow:
+      "0 5px 15px rgba(0,0,0,0.1)"
   },
 
 
 
+  // 🔥 DESCRIPTION
   description: {
     color: "#555",
     lineHeight: "1.6"
@@ -229,6 +431,7 @@ const styles = {
 
 
 
+  // 🔥 PRICE
   price: {
     color: "#6c63ff",
     margin: "20px 0"
@@ -236,6 +439,7 @@ const styles = {
 
 
 
+  // 🔥 QUANTITY CONTAINER
   qtyContainer: {
     display: "flex",
     alignItems: "center",
@@ -245,6 +449,7 @@ const styles = {
 
 
 
+  // 🔥 QUANTITY BUTTON
   qtyBtn: {
     width: "40px",
     height: "40px",
@@ -258,6 +463,7 @@ const styles = {
 
 
 
+  // 🔥 QUANTITY TEXT
   qtyText: {
     fontSize: "20px",
     fontWeight: "bold"
@@ -265,6 +471,7 @@ const styles = {
 
 
 
+  // 🔥 BUTTON CONTAINER
   buttonContainer: {
     display: "flex",
     gap: "20px",
@@ -273,6 +480,7 @@ const styles = {
 
 
 
+  // 🛒 ADD TO CART BUTTON
   cartBtn: {
     padding: "12px 25px",
     border: "none",
@@ -285,6 +493,7 @@ const styles = {
 
 
 
+  // ⚡ BUY NOW BUTTON
   buyBtn: {
     padding: "12px 25px",
     border: "none",
@@ -293,6 +502,14 @@ const styles = {
     borderRadius: "10px",
     cursor: "pointer",
     fontWeight: "bold"
+  },
+
+
+
+  // 🔥 LOADING TEXT
+  loading: {
+    textAlign: "center",
+    marginTop: "100px"
   }
 
 };

@@ -1,201 +1,424 @@
-// 🔹 React hooks
+// 📁 src/pages/Auth.jsx
+
+// =====================================================
+// 🔥 IMPORT REACT HOOKS
+// =====================================================
 import { useState, useEffect } from "react";
 
-// 🔹 For page navigation (routing)
+
+
+// =====================================================
+// 🔥 IMPORT NAVIGATION
+// =====================================================
 import { useNavigate } from "react-router-dom";
+
+
+
+
 
 function Auth() {
 
-  // 🔸 State to toggle between Login & Register UI
-  const [isLogin, setIsLogin] = useState(false);
+  // =====================================================
+  // 🔥 LOGIN / REGISTER TOGGLE
+  // false = Register
+  // true = Login
+  // =====================================================
+  const [isLogin, setIsLogin] =
+    useState(false);
 
-  // 🔸 State to store form data (email + password)
+
+
+
+  // =====================================================
+  // 🔥 FORM STATE
+  // =====================================================
   const [form, setForm] = useState({
     email: "",
     password: ""
   });
 
-  // 🔸 Hook to navigate between pages
+
+
+
+  // =====================================================
+  // 🔥 NAVIGATION
+  // =====================================================
   const navigate = useNavigate();
 
 
-  // 🔥 CHECK IF USER ALREADY REGISTERED (runs once when page loads)
+
+
+  // =====================================================
+  // 🔥 CHECK USER ON PAGE LOAD
+  // =====================================================
   useEffect(() => {
 
     let storedUser = null;
 
     try {
-      // 🔹 Get user from localStorage
-      storedUser = JSON.parse(localStorage.getItem("user"));
+
+      // 🔥 GET USER FROM LOCAL STORAGE
+      storedUser = JSON.parse(
+        localStorage.getItem("user")
+      );
+
     } catch (error) {
-      // 🔹 If corrupted data → remove it
+
+      // ❌ REMOVE CORRUPTED DATA
       localStorage.removeItem("user");
+
       storedUser = null;
+
     }
 
-    // 🔹 If user exists → show Login page
+
+
+    // ✅ IF USER EXISTS
     if (storedUser) {
+
+      // 🔥 SHOW LOGIN PAGE
       setIsLogin(true);
+
     } else {
-      // 🔹 If no user → show Register page
+
+      // 🔥 SHOW REGISTER PAGE
       setIsLogin(false);
+
     }
 
-  }, []); // [] = run only once
+  }, []);
 
 
-  // 🔥 HANDLE LOGIN & REGISTER BUTTON CLICK
+
+
+
+  // =====================================================
+  // 🔥 HANDLE LOGIN / REGISTER
+  // =====================================================
   const handleSubmit = () => {
 
     let storedUser = null;
 
     try {
-      storedUser = JSON.parse(localStorage.getItem("user"));
+
+      storedUser = JSON.parse(
+        localStorage.getItem("user")
+      );
+
     } catch {
+
       localStorage.removeItem("user");
+
       storedUser = null;
+
     }
 
+
+
+    // =====================================================
     // 🔐 LOGIN LOGIC
+    // =====================================================
     if (isLogin) {
 
-      // ❌ No user found
+      // ❌ NO ACCOUNT FOUND
       if (!storedUser) {
-        alert("No account found. Please register.");
-        setIsLogin(false); // switch to register
+
+        alert(
+          "No account found. Please register."
+        );
+
+        setIsLogin(false);
+
         return;
+
       }
 
-      // ✅ Check credentials match
+
+
+      // ✅ CHECK EMAIL & PASSWORD
       if (
+
         storedUser.email === form.email &&
         storedUser.password === form.password
+
       ) {
-        localStorage.setItem("isLoggedIn", "true"); // session
-        navigate("/dashboard"); // go to dashboard
+
+        // ✅ SAVE LOGIN SESSION
+        localStorage.setItem(
+          "isLoggedIn",
+          "true"
+        );
+
+
+
+        // ✅ SUCCESS MESSAGE
+        alert("Login Successful ✅");
+
+
+
+        // ✅ GO TO DASHBOARD
+        navigate("/dashboard");
+
       } else {
-        alert("Invalid credentials");
+
+        // ❌ INVALID LOGIN
+        alert("Invalid Credentials");
+
       }
 
-    } else {
-
-      // 📝 REGISTER LOGIC
-
-      // ❌ Empty fields check
-      if (!form.email || !form.password) {
-        alert("Fill all fields");
-        return;
-      }
-
-      // ✅ Save user in localStorage
-      localStorage.setItem("user", JSON.stringify(form));
-
-      alert("Registered successfully!");
-
-      // 🔄 Switch to login after register
-      setIsLogin(true);
     }
+
+
+
+    // =====================================================
+    // 📝 REGISTER LOGIC
+    // =====================================================
+    else {
+
+      // ❌ EMPTY FIELD VALIDATION
+      if (
+        !form.email ||
+        !form.password
+      ) {
+
+        alert("Fill all fields");
+
+        return;
+
+      }
+
+
+
+      // ✅ SAVE USER
+      localStorage.setItem(
+        "user",
+        JSON.stringify(form)
+      );
+
+
+
+      // ✅ SUCCESS MESSAGE
+      alert("Registered Successfully ✅");
+
+
+
+      // 🔥 CLEAR FORM
+      setForm({
+        email: "",
+        password: ""
+      });
+
+
+
+      // 🔥 SWITCH TO LOGIN PAGE
+      setIsLogin(true);
+
+    }
+
   };
 
 
-  // 🎨 UI PART (what you see on screen)
+
+
+
+  // =====================================================
+  // 🎨 UI
+  // =====================================================
   return (
+
     <div style={styles.container}>
+
+      {/* 🔥 AUTH BOX */}
       <div style={styles.box}>
 
-        {/* 🔹 Title */}
+        {/* =====================================================
+            🔥 TITLE
+        ===================================================== */}
         <h2 style={styles.title}>
-          {isLogin ? "Welcome Back 👋" : "Create Account 🚀"}
+
+          {isLogin
+            ? "Welcome Back 👋"
+            : "Create Account 🚀"}
+
         </h2>
 
-        {/* 🔹 Email Input */}
+
+
+
+        {/* =====================================================
+            🔥 EMAIL INPUT
+        ===================================================== */}
         <input
-          placeholder="Email"
+          type="email"
+          placeholder="Enter Email"
           value={form.email}
           onChange={(e) =>
-            setForm({ ...form, email: e.target.value })
+
+            setForm({
+              ...form,
+              email: e.target.value
+            })
+
           }
           style={styles.input}
         />
 
-        {/* 🔹 Password Input */}
+
+
+
+        {/* =====================================================
+            🔥 PASSWORD INPUT
+        ===================================================== */}
         <input
           type="password"
-          placeholder="Password"
+          placeholder="Enter Password"
           value={form.password}
           onChange={(e) =>
-            setForm({ ...form, password: e.target.value })
+
+            setForm({
+              ...form,
+              password: e.target.value
+            })
+
           }
           style={styles.input}
         />
 
-        {/* 🔹 Main Button (Login / Register) */}
+
+
+
+        {/* =====================================================
+            🔥 LOGIN / REGISTER BUTTON
+        ===================================================== */}
         <button
-          onClick={handleSubmit}
           style={styles.button}
-          onMouseOver={(e) => (e.target.style.opacity = "0.9")}
-          onMouseOut={(e) => (e.target.style.opacity = "1")}
+          onClick={handleSubmit}
+          onMouseOver={(e) =>
+            (e.target.style.opacity = "0.9")
+          }
+          onMouseOut={(e) =>
+            (e.target.style.opacity = "1")
+          }
         >
-          {isLogin ? "Login" : "Register"}
+
+          {isLogin
+            ? "Login"
+            : "Register"}
+
         </button>
 
-        {/* 🔄 SWITCH BETWEEN LOGIN & REGISTER */}
+
+
+
+
+        {/* =====================================================
+            🔥 SWITCH LOGIN / REGISTER
+        ===================================================== */}
         <p style={styles.switchText}>
-          {isLogin ? "Don't have an account?" : "Already have an account?"}
+
+          {isLogin
+            ? "Don't have an account?"
+            : "Already have an account?"}
+
           <span
             style={styles.link}
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() =>
+              setIsLogin(!isLogin)
+            }
           >
-            {isLogin ? " Register" : " Login"}
+
+            {isLogin
+              ? " Register"
+              : " Login"}
+
           </span>
+
         </p>
 
-        <hr style={{ margin: "20px 0", opacity: 0.3 }} />
 
-        {/* 👨‍💼 ADMIN LOGIN BUTTON */}
+
+
+
+        {/* =====================================================
+            🔥 DIVIDER
+        ===================================================== */}
+        <hr
+          style={{
+            margin: "20px 0",
+            opacity: 0.3
+          }}
+        />
+
+
+
+
+
+        {/* =====================================================
+            👨‍💼 ADMIN LOGIN BUTTON
+        ===================================================== */}
         <button
           style={styles.adminBtn}
-          onClick={() => navigate("/admin")}
+          onClick={() =>
+            navigate("/admin")
+          }
         >
+
           Login as Admin
+
         </button>
 
       </div>
+
     </div>
+
   );
+
 }
 
 
-// 🎨 STYLES (CSS inside JS)
+
+
+
+// =====================================================
+// 🎨 STYLES
+// =====================================================
 const styles = {
 
-  // 🔹 Full page container
+  // 🔥 PAGE CONTAINER
   container: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     height: "100vh",
-    background: "linear-gradient(135deg, #667eea, #764ba2)"
+    background:
+      "linear-gradient(135deg, #667eea, #764ba2)"
   },
 
-  // 🔹 Card box
+
+
+  // 🔥 AUTH BOX
   box: {
     background: "#fff",
     padding: "40px 30px",
     borderRadius: "15px",
     width: "320px",
     textAlign: "center",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
+    boxShadow:
+      "0 10px 30px rgba(0,0,0,0.2)"
   },
 
-  // 🔹 Title
+
+
+  // 🔥 TITLE
   title: {
     marginBottom: "20px",
     fontWeight: "bold",
     color: "#333"
   },
 
-  // 🔹 Input fields
+
+
+  // 🔥 INPUT
   input: {
     width: "90%",
     padding: "12px",
@@ -206,34 +429,44 @@ const styles = {
     fontSize: "14px"
   },
 
-  // 🔹 Main button
+
+
+  // 🔥 MAIN BUTTON
   button: {
     width: "100%",
     padding: "12px",
     marginTop: "10px",
     borderRadius: "8px",
-    background: "linear-gradient(135deg, #667eea, #764ba2)",
+    background:
+      "linear-gradient(135deg, #667eea, #764ba2)",
     color: "white",
     border: "none",
     fontWeight: "bold",
-    cursor: "pointer"
+    cursor: "pointer",
+    transition: "0.3s"
   },
 
-  // 🔹 Text below button
+
+
+  // 🔥 SWITCH TEXT
   switchText: {
     marginTop: "15px",
     fontSize: "14px",
     color: "#555"
   },
 
-  // 🔹 Clickable link
+
+
+  // 🔥 LOGIN / REGISTER LINK
   link: {
     color: "#667eea",
     cursor: "pointer",
     fontWeight: "bold"
   },
 
-  // 🔹 Admin button
+
+
+  // 🔥 ADMIN BUTTON
   adminBtn: {
     width: "100%",
     padding: "10px",
@@ -241,8 +474,15 @@ const styles = {
     background: "#222",
     color: "#fff",
     border: "none",
-    cursor: "pointer"
+    cursor: "pointer",
+    fontWeight: "bold"
   }
+
 };
 
+
+
+// =====================================================
+// 🔥 EXPORT COMPONENT
+// =====================================================
 export default Auth;
