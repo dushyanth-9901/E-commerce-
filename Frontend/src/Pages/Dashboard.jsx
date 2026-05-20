@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
-import SearchBar from "../components/SearchBar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Footer from "../components/Footer";
@@ -111,7 +110,11 @@ function Dashboard({ cart }) {
     <div style={styles.page}>
 
       {/* 🔥 NAVBAR */}
-      <Navbar cart={cart} />
+                <Navbar
+            cart={cart}
+            search={search}
+            setSearch={setSearch}
+          />
 
 
 
@@ -133,8 +136,7 @@ function Dashboard({ cart }) {
 
 
 
-        {/* 🔥 SEARCH BAR */}
-         <SearchBar setSearch={setSearch} />
+       
 
 
 

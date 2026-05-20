@@ -3,14 +3,21 @@
 // =====================================================
 // 🔥 IMPORT REACT HOOKS
 // =====================================================
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 
 
 // =====================================================
-// 🔥 IMPORT NAVIGATION
+// 🔥 IMPORT REACT ROUTER
 // =====================================================
 import { useNavigate } from "react-router-dom";
+
+
+
+// =====================================================
+// 🔥 IMPORT AXIOS
+// =====================================================
+import axios from "axios";
 
 
 
@@ -20,8 +27,8 @@ function Auth() {
 
   // =====================================================
   // 🔥 LOGIN / REGISTER TOGGLE
-  // false = Register
-  // true = Login
+  // false = REGISTER
+  // true = LOGIN
   // =====================================================
   const [isLogin, setIsLogin] =
     useState(false);
@@ -33,8 +40,11 @@ function Auth() {
   // 🔥 FORM STATE
   // =====================================================
   const [form, setForm] = useState({
+
+    name: "",
     email: "",
     password: ""
+
   });
 
 
@@ -48,102 +58,59 @@ function Auth() {
 
 
 
-  // =====================================================
-  // 🔥 CHECK USER ON PAGE LOAD
-  // =====================================================
-  useEffect(() => {
 
-    let storedUser = null;
+  // =====================================================
+  // 🔥 HANDLE LOGIN & REGISTER
+  // =====================================================
+  const handleSubmit = async () => {
 
     try {
 
-      // 🔥 GET USER FROM LOCAL STORAGE
-      storedUser = JSON.parse(
-        localStorage.getItem("user")
-      );
+      // =====================================================
+      // 🔐 LOGIN LOGIC
+      // =====================================================
+      if (isLogin) {
 
-    } catch (error) {
+        // 🔥 LOGIN API
+        const res = await axios.post(
 
-      // ❌ REMOVE CORRUPTED DATA
-      localStorage.removeItem("user");
+          "http://localhost:5000/api/auth/login",
 
-      storedUser = null;
+          {
+            email: form.email,
+            password: form.password
+          }
 
-    }
-
-
-
-    // ✅ IF USER EXISTS
-    if (storedUser) {
-
-      // 🔥 SHOW LOGIN PAGE
-      setIsLogin(true);
-
-    } else {
-
-      // 🔥 SHOW REGISTER PAGE
-      setIsLogin(false);
-
-    }
-
-  }, []);
-
-
-
-
-
-  // =====================================================
-  // 🔥 HANDLE LOGIN / REGISTER
-  // =====================================================
-  const handleSubmit = () => {
-
-    let storedUser = null;
-
-    try {
-
-      storedUser = JSON.parse(
-        localStorage.getItem("user")
-      );
-
-    } catch {
-
-      localStorage.removeItem("user");
-
-      storedUser = null;
-
-    }
-
-
-
-    // =====================================================
-    // 🔐 LOGIN LOGIC
-    // =====================================================
-    if (isLogin) {
-
-      // ❌ NO ACCOUNT FOUND
-      if (!storedUser) {
-
-        alert(
-          "No account found. Please register."
         );
 
-        setIsLogin(false);
-
-        return;
-
-      }
 
 
+        // =====================================================
+        // 🔥 SAVE JWT TOKEN
+        // =====================================================
+        localStorage.setItem(
+          "token",
+          res.data.token
+        );
 
-      // ✅ CHECK EMAIL & PASSWORD
-      if (
 
-        storedUser.email === form.email &&
-        storedUser.password === form.password
 
-      ) {
+        // =====================================================
+        // 🔥 SAVE USER DATA
+        // =====================================================
+        localStorage.setItem(
 
-        // ✅ SAVE LOGIN SESSION
+          "user",
+
+          JSON.stringify(res.data.user)
+
+        );
+
+
+
+        // =====================================================
+        // 🔥 LOGIN STATUS
+        // =====================================================
         localStorage.setItem(
           "isLoggedIn",
           "true"
@@ -151,71 +118,118 @@ function Auth() {
 
 
 
+        // =====================================================
         // ✅ SUCCESS MESSAGE
+        // =====================================================
         alert("Login Successful ✅");
 
 
 
-        // ✅ GO TO DASHBOARD
+        // =====================================================
+        // 🔥 REDIRECT TO DASHBOARD
+        // =====================================================
         navigate("/dashboard");
 
-      } else {
-
-        // ❌ INVALID LOGIN
-        alert("Invalid Credentials");
-
-      }
-
-    }
-
-
-
-    // =====================================================
-    // 📝 REGISTER LOGIC
-    // =====================================================
-    else {
-
-      // ❌ EMPTY FIELD VALIDATION
-      if (
-        !form.email ||
-        !form.password
-      ) {
-
-        alert("Fill all fields");
-
-        return;
-
       }
 
 
 
-      // ✅ SAVE USER
-      localStorage.setItem(
-        "user",
-        JSON.stringify(form)
+
+
+
+
+      // =====================================================
+      // 📝 REGISTER LOGIC
+      // =====================================================
+      else {
+
+        // =====================================================
+        // ❌ EMPTY FIELD VALIDATION
+        // =====================================================
+        if (
+
+          !form.name ||
+          !form.email ||
+          !form.password
+
+        ) {
+
+          alert("Please fill all fields");
+
+          return;
+
+        }
+
+
+
+        // =====================================================
+        // 🔥 REGISTER API
+        // =====================================================
+        await axios.post(
+
+          "http://localhost:5000/api/auth/register",
+
+          {
+            name: form.name,
+            email: form.email,
+            password: form.password
+          }
+
+        );
+
+
+
+        // =====================================================
+        // ✅ SUCCESS MESSAGE
+        // =====================================================
+        alert(
+          "Registered Successfully ✅"
+        );
+
+
+
+        // =====================================================
+        // 🔥 CLEAR FORM
+        // =====================================================
+        setForm({
+
+          name: "",
+          email: "",
+          password: ""
+
+        });
+
+
+
+        // =====================================================
+        // 🔥 SWITCH TO LOGIN PAGE
+        // =====================================================
+        setIsLogin(true);
+
+      }
+
+    } catch (error) {
+
+      console.log(error);
+
+
+
+      // =====================================================
+      // ❌ ERROR MESSAGE
+      // =====================================================
+      alert(
+
+        error.response?.data?.message
+        || "Something went wrong"
+
       );
-
-
-
-      // ✅ SUCCESS MESSAGE
-      alert("Registered Successfully ✅");
-
-
-
-      // 🔥 CLEAR FORM
-      setForm({
-        email: "",
-        password: ""
-      });
-
-
-
-      // 🔥 SWITCH TO LOGIN PAGE
-      setIsLogin(true);
 
     }
 
   };
+
+
+
 
 
 
@@ -228,8 +242,12 @@ function Auth() {
 
     <div style={styles.container}>
 
-      {/* 🔥 AUTH BOX */}
+
+      {/* =====================================================
+          🔥 AUTH BOX
+      ===================================================== */}
       <div style={styles.box}>
+
 
         {/* =====================================================
             🔥 TITLE
@@ -245,6 +263,41 @@ function Auth() {
 
 
 
+
+
+
+        {/* =====================================================
+            🔥 NAME INPUT
+            ONLY FOR REGISTER
+        ===================================================== */}
+        {!isLogin && (
+
+          <input
+            type="text"
+            placeholder="Enter Name"
+            value={form.name}
+            onChange={(e) =>
+
+              setForm({
+
+                ...form,
+                name: e.target.value
+
+              })
+
+            }
+            style={styles.input}
+          />
+
+        )}
+
+
+
+
+
+
+
+
         {/* =====================================================
             🔥 EMAIL INPUT
         ===================================================== */}
@@ -255,13 +308,19 @@ function Auth() {
           onChange={(e) =>
 
             setForm({
+
               ...form,
               email: e.target.value
+
             })
 
           }
           style={styles.input}
         />
+
+
+
+
 
 
 
@@ -276,13 +335,19 @@ function Auth() {
           onChange={(e) =>
 
             setForm({
+
               ...form,
               password: e.target.value
+
             })
 
           }
           style={styles.input}
         />
+
+
+
+
 
 
 
@@ -293,12 +358,6 @@ function Auth() {
         <button
           style={styles.button}
           onClick={handleSubmit}
-          onMouseOver={(e) =>
-            (e.target.style.opacity = "0.9")
-          }
-          onMouseOut={(e) =>
-            (e.target.style.opacity = "1")
-          }
         >
 
           {isLogin
@@ -306,6 +365,9 @@ function Auth() {
             : "Register"}
 
         </button>
+
+
+
 
 
 
@@ -339,6 +401,9 @@ function Auth() {
 
 
 
+
+
+
         {/* =====================================================
             🔥 DIVIDER
         ===================================================== */}
@@ -348,6 +413,9 @@ function Auth() {
             opacity: 0.3
           }}
         />
+
+
+
 
 
 
@@ -379,12 +447,17 @@ function Auth() {
 
 
 
+
+
+
 // =====================================================
 // 🎨 STYLES
 // =====================================================
 const styles = {
 
+  // =====================================================
   // 🔥 PAGE CONTAINER
+  // =====================================================
   container: {
     display: "flex",
     justifyContent: "center",
@@ -396,7 +469,9 @@ const styles = {
 
 
 
+  // =====================================================
   // 🔥 AUTH BOX
+  // =====================================================
   box: {
     background: "#fff",
     padding: "40px 30px",
@@ -409,7 +484,9 @@ const styles = {
 
 
 
+  // =====================================================
   // 🔥 TITLE
+  // =====================================================
   title: {
     marginBottom: "20px",
     fontWeight: "bold",
@@ -418,7 +495,9 @@ const styles = {
 
 
 
-  // 🔥 INPUT
+  // =====================================================
+  // 🔥 INPUT FIELD
+  // =====================================================
   input: {
     width: "90%",
     padding: "12px",
@@ -431,7 +510,9 @@ const styles = {
 
 
 
+  // =====================================================
   // 🔥 MAIN BUTTON
+  // =====================================================
   button: {
     width: "100%",
     padding: "12px",
@@ -442,13 +523,14 @@ const styles = {
     color: "white",
     border: "none",
     fontWeight: "bold",
-    cursor: "pointer",
-    transition: "0.3s"
+    cursor: "pointer"
   },
 
 
 
+  // =====================================================
   // 🔥 SWITCH TEXT
+  // =====================================================
   switchText: {
     marginTop: "15px",
     fontSize: "14px",
@@ -457,7 +539,9 @@ const styles = {
 
 
 
+  // =====================================================
   // 🔥 LOGIN / REGISTER LINK
+  // =====================================================
   link: {
     color: "#667eea",
     cursor: "pointer",
@@ -466,7 +550,9 @@ const styles = {
 
 
 
+  // =====================================================
   // 🔥 ADMIN BUTTON
+  // =====================================================
   adminBtn: {
     width: "100%",
     padding: "10px",
@@ -479,6 +565,7 @@ const styles = {
   }
 
 };
+
 
 
 
