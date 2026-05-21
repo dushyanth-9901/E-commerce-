@@ -264,8 +264,6 @@ function ProductDetails({
           {product.name}
         </h1>
 
-
-
         {/* 🔥 DESCRIPTION */}
         <p style={styles.description}>
 
@@ -275,8 +273,6 @@ function ProductDetails({
           }
 
         </p>
-
-
 
         {/* 🔥 PRICE */}
         <h2 style={styles.price}>
@@ -383,7 +379,7 @@ const styles = {
     padding: "40px",
     flexWrap: "wrap",
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "flex-start",
     minHeight: "100vh",
     background: "#f4f4f4"
   },

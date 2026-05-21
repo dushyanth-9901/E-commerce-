@@ -557,7 +557,7 @@ const styles = {
     width: "100%",
     padding: "10px",
     borderRadius: "8px",
-    background: "#222",
+    background: "#4faab5",
     color: "#fff",
     border: "none",
     cursor: "pointer",
