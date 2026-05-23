@@ -1,8 +1,14 @@
 // 📁 src/pages/Cart.jsx
 
+// =====================================================
 // 🔥 IMPORTS
+// =====================================================
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+
+
+
+
 
 function Cart({ cart, setCart }) {
 
@@ -13,142 +19,129 @@ function Cart({ cart, setCart }) {
 
 
 
-  // =====================================================
-  // 🔐 PROTECT CART PAGE
-  // =====================================================
-  useEffect(() => {
-
-    // 🔥 CHECK LOGIN STATUS
-    const isLoggedIn =
-      localStorage.getItem("isLoggedIn");
-
-
-
-    // ❌ IF USER NOT LOGGED IN
-    if (!isLoggedIn) {
-
-      // 🔥 REDIRECT TO LOGIN PAGE
-      navigate("/login");
-
-    }
-
-  }, [navigate]);
-
-
-
-
-  // =====================================================
-  // 🔥 INCREASE QUANTITY
-  // =====================================================
-  const increaseQty = (id) => {
-
-    const updatedCart = cart.map((item) => {
-
-      if (item.id === id) {
-
-        return {
-          ...item,
-          quantity: item.quantity + 1
-        };
-
-      }
-
-      return item;
-
-    });
-
-    setCart(updatedCart);
-
-  };
-
-
-
-
-  // =====================================================
-  // 🔥 DECREASE QUANTITY
-  // =====================================================
-  const decreaseQty = (id) => {
-
-    const updatedCart = cart.map((item) => {
-
-      if (item.id === id) {
-
-        return {
-          ...item,
-          quantity:
-            item.quantity > 1
-              ? item.quantity - 1
-              : 1
-        };
-
-      }
-
-      return item;
-
-    });
-
-    setCart(updatedCart);
-
-  };
-
-
 
 
   // =====================================================
   // ❌ REMOVE PRODUCT
   // =====================================================
-  const removeItem = (id) => {
+  const removeFromCart = (id) => {
 
-    const filteredCart = cart.filter(
-      (item) => item.id !== id
-    );
+    const updatedCart =
+      cart.filter((item) => item.id !== id);
 
-    setCart(filteredCart);
+    setCart(updatedCart);
 
   };
 
 
 
 
-  // =====================================================
-  // 💰 TOTAL PRICE
-  // =====================================================
-  const totalPrice = cart.reduce(
 
-    (total, item) =>
-
-      total +
-      item.price * item.quantity,
-
-    0
-
-  );
-
-
-// =====================================================
-// ⚡ BUY SINGLE PRODUCT
-// =====================================================
-const buySingleProduct = (item) => {
-
-  alert(
-    `${item.name} Ordered Successfully ✅`
-  );
-
-};
 
   // =====================================================
-  // 🔥 UI
+  // 💳 HANDLE PAYMENT
+  // =====================================================
+  const handlePayment = async (product) => {
+
+    try {
+
+      // =====================================================
+      // 🔥 CREATE ORDER
+      // =====================================================
+      const res = await axios.post(
+
+        "http://localhost:5000/api/payment/create-order",
+
+        {
+          amount: product.price
+        }
+
+      );
+
+
+
+      // =====================================================
+      // 🔥 RAZORPAY OPTIONS
+      // =====================================================
+      const options = {
+
+        key: "rzp_test_SsfWvZhtYI6dCX",
+
+        amount: res.data.amount,
+
+        currency: "INR",
+
+        name: "My E-commerce",
+
+        description: product.name,
+
+        order_id: res.data.id,
+
+
+
+        // =====================================================
+        // ✅ PAYMENT SUCCESS
+        // =====================================================
+        handler: function () {
+
+          alert("Payment Successful ✅");
+
+        },
+
+
+
+        // =====================================================
+        // 🎨 THEME
+        // =====================================================
+        theme: {
+          color: "#111"
+        }
+
+      };
+
+
+
+      // =====================================================
+      // 🔥 OPEN RAZORPAY
+      // =====================================================
+      const razorpay =
+        new window.Razorpay(options);
+
+      razorpay.open();
+
+    } catch (error) {
+
+      console.log(error);
+
+      alert("Payment Failed ❌");
+
+    }
+
+  };
+
+
+
+
+
+
+
+  // =====================================================
+  // 🎨 UI
   // =====================================================
   return (
 
     <div style={styles.container}>
 
+
       {/* =====================================================
-          🔥 PAGE TITLE
+          🔥 TITLE
       ===================================================== */}
-      <h1 style={styles.heading}>
-        Your Cart 🛒
+      <h1 style={styles.title}>
+        My Cart 🛒
       </h1>
+
+
+
 
 
 
@@ -163,165 +156,91 @@ const buySingleProduct = (item) => {
             Cart is Empty 😢
           </h2>
 
-
-
-          {/* 🔥 GO BACK TO DASHBOARD */}
           <button
             style={styles.shopBtn}
-            onClick={() =>
-              navigate("/dashboard")
-            }
+            onClick={() => navigate("/home")}
           >
-            Go Shopping
+            Shop Now
           </button>
 
         </div>
 
       ) : (
 
-        <>
-
-          {/* =====================================================
-              🔥 CART ITEMS
-          ===================================================== */}
-          <div style={styles.cartContainer}>
-
-            {cart.map((item) => (
-
-              <div
-                key={item.id}
-                style={styles.card}
-              >
-
-                {/* 🔥 PRODUCT IMAGE */}
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  style={styles.image}
-                />
 
 
+        // =====================================================
+        // 🔥 PRODUCTS
+        // =====================================================
+        <div style={styles.productsContainer}>
 
-                {/* 🔥 PRODUCT DETAILS */}
-                <div style={styles.details}>
+          {cart.map((product) => (
 
-                  <h2>
-                    {item.name}
-                  </h2>
+            <div
+              key={product.id}
+              style={styles.card}
+            >
+
+              {/* 🔥 IMAGE */}
+              <img
+                src={product.image}
+                alt={product.name}
+                style={styles.image}
+              />
 
 
 
-                  <p style={styles.price}>
-                    ₹ {item.price}
-                  </p>
-
-
-
-                  {/* =====================================================
-                      🔥 QUANTITY BUTTONS
-                  ===================================================== */}
-                  <div style={styles.qtyContainer}>
-
-                    {/* 🔥 DECREASE */}
-                    <button
-                      type="button"
-                      style={styles.qtyBtn}
-                      onClick={() =>
-                        decreaseQty(item.id)
-                      }
-                    >
-                      -
-                    </button>
-
-
-
-                    {/* 🔥 QUANTITY */}
-                    <span style={styles.qtyText}>
-                      {item.quantity}
-                    </span>
-
-
-
-                    {/* 🔥 INCREASE */}
-                    <button
-                      type="button"
-                      style={styles.qtyBtn}
-                      onClick={() =>
-                        increaseQty(item.id)
-                      }
-                    >
-                      +
-                    </button>
-
-                  </div>
-
-
-
-                 {/* =====================================================
-                      🔥 ACTION BUTTONS
-                  ===================================================== */}
-                  <div style={styles.actionButtons}>
-
-                    {/* ⚡ BUY NOW */}
-                    <button
-                      type="button"
-                      style={styles.buyBtn}
-                      onClick={() =>
-                        buySingleProduct(item)
-                      }
-                    >
-                      Buy Now
-                    </button>
-
-
-
-                    {/* ❌ REMOVE */}
-                    <button
-                      type="button"
-                      style={styles.removeBtn}
-                      onClick={() =>
-                        removeItem(item.id)
-                      }
-                    >
-                      Remove
-                    </button>
-
-</div>
-                </div>
-
-              </div>
-
-            ))}
-
-          </div>
-
-
-
-                    {/* =====================================================
-                💰 TOTAL SECTION
-            ===================================================== */}
-            <div style={styles.totalBox}>
-
+              {/* 🔥 NAME */}
               <h2>
-                Total: ₹ {totalPrice}
+                {product.name}
               </h2>
 
-              {/* 🔥 CHECKOUT */}
+
+
+              {/* 🔥 PRICE */}
+              <p style={styles.price}>
+                ₹ {product.price}
+              </p>
+
+
+
+
+
+
+              {/* =====================================================
+                  💳 BUY NOW
+              ===================================================== */}
               <button
-                type="button"
-                style={styles.checkoutBtn}
+                style={styles.buyBtn}
                 onClick={() =>
-                  alert(
-                    "Order Placed Successfully ✅"
-                  )
+                  handlePayment(product)
                 }
               >
-                Checkout
+                Buy Now
+              </button>
+
+
+
+
+
+
+              {/* =====================================================
+                  ❌ REMOVE BUTTON
+              ===================================================== */}
+              <button
+                style={styles.removeBtn}
+                onClick={() =>
+                  removeFromCart(product.id)
+                }
+              >
+                Remove
               </button>
 
             </div>
 
-        </>
+          ))}
+
+        </div>
 
       )}
 
@@ -334,6 +253,11 @@ const buySingleProduct = (item) => {
 
 
 
+
+
+
+
+
 // =====================================================
 // 🎨 STYLES
 // =====================================================
@@ -341,26 +265,27 @@ const styles = {
 
   // 🔥 MAIN CONTAINER
   container: {
-    minHeight: "100vh",
+    padding: "30px",
     background: "#f4f4f4",
-    padding: "30px"
+    minHeight: "100vh"
   },
 
 
 
-  // 🔥 PAGE TITLE
-  heading: {
+  // 🔥 TITLE
+  title: {
     textAlign: "center",
-    marginBottom: "30px"
+    marginBottom: "40px"
   },
 
 
 
-  // 🔥 CART CONTAINER
-  cartContainer: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "20px"
+  // 🔥 PRODUCTS GRID
+  productsContainer: {
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(250px, 1fr))",
+    gap: "25px"
   },
 
 
@@ -368,114 +293,64 @@ const styles = {
   // 🔥 PRODUCT CARD
   card: {
     background: "#fff",
-    display: "flex",
-    gap: "20px",
     padding: "20px",
     borderRadius: "15px",
     boxShadow:
       "0 5px 15px rgba(0,0,0,0.1)",
-    flexWrap: "wrap"
+    textAlign: "center"
   },
 
 
 
   // 🔥 PRODUCT IMAGE
   image: {
-    width: "180px",
-    height: "180px",
+    width: "100%",
+    height: "220px",
     objectFit: "cover",
     borderRadius: "10px"
   },
 
 
 
-  // 🔥 DETAILS
-  details: {
-    flex: 1
-  },
-
-
-
   // 🔥 PRICE
   price: {
-    color: "#6c63ff",
-    fontWeight: "bold"
-  },
-
-
-
-  // 🔥 QUANTITY CONTAINER
-  qtyContainer: {
-    display: "flex",
-    alignItems: "center",
-    gap: "15px",
+    fontSize: "20px",
+    fontWeight: "bold",
     margin: "15px 0"
   },
 
 
 
-  // 🔥 QUANTITY BUTTON
-  qtyBtn: {
-    width: "35px",
-    height: "35px",
-    border: "none",
-    background: "#6c63ff",
+  // 💳 BUY BUTTON
+  buyBtn: {
+    width: "100%",
+    padding: "12px",
+    background: "#111",
     color: "#fff",
+    border: "none",
     borderRadius: "8px",
     cursor: "pointer",
-    fontSize: "18px"
-  },
-
-
-
-  // 🔥 QUANTITY TEXT
-  qtyText: {
-    fontWeight: "bold",
-    fontSize: "18px"
+    marginBottom: "10px",
+    fontWeight: "bold"
   },
 
 
 
   // ❌ REMOVE BUTTON
   removeBtn: {
-    padding: "10px 18px",
-    border: "none",
+    width: "100%",
+    padding: "12px",
     background: "crimson",
     color: "#fff",
-    borderRadius: "8px",
-    cursor: "pointer"
-  },
-
-
-
-  // 💰 TOTAL BOX
-  totalBox: {
-    marginTop: "40px",
-    background: "#fff",
-    padding: "25px",
-    borderRadius: "15px",
-    textAlign: "center",
-    boxShadow:
-      "0 5px 15px rgba(0,0,0,0.1)"
-  },
-
-
-
-  // 🔥 CHECKOUT BUTTON
-  checkoutBtn: {
-    marginTop: "15px",
-    padding: "12px 30px",
     border: "none",
-    background: "#111",
-    color: "#fff",
-    borderRadius: "10px",
+    borderRadius: "8px",
     cursor: "pointer",
     fontWeight: "bold"
   },
 
 
 
-  // ❌ EMPTY BOX
+  // 🔥 EMPTY CART
   emptyBox: {
     textAlign: "center",
     marginTop: "100px"
@@ -485,33 +360,20 @@ const styles = {
 
   // 🔥 SHOP BUTTON
   shopBtn: {
-    marginTop: "20px",
     padding: "12px 25px",
     border: "none",
-    background: "#6c63ff",
+    background: "#111",
     color: "#fff",
-    borderRadius: "10px",
-    cursor: "pointer"
-  },
-  // 🔥 ACTION BUTTONS
-actionButtons: {
-  display: "flex",
-  gap: "10px",
-  marginTop: "15px"
-},
-
-
-
-// ⚡ BUY NOW BUTTON
-buyBtn: {
-  padding: "10px 18px",
-  border: "none",
-  background: "#111",
-  color: "#fff",
-  borderRadius: "8px",
-  cursor: "pointer"
-}
+    borderRadius: "8px",
+    cursor: "pointer",
+    marginTop: "20px"
+  }
 
 };
 
+
+
+// =====================================================
+// 🔥 EXPORT
+// =====================================================
 export default Cart;

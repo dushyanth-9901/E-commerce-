@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
@@ -10,6 +11,7 @@ const userRoutes = require("./routes/users");
 const productRoutes = require("./routes/products");
 const adminRoutes = require("./routes/admin");
 const authRoutes = require("./routes/authRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 
 
@@ -18,19 +20,16 @@ app.use(cors());
 
 app.use(express.json());
 
-
-  app.use(
-    "/api/auth",
-    authRoutes
-  );
-
 // 🔥 ROUTES
+app.use("/api/auth",authRoutes);
+
 app.use("/api/users", userRoutes);
 
 app.use("/api/products", productRoutes);
 
 app.use("/api/admin", adminRoutes);
 
+app.use("/api/payment", paymentRoutes);
 
 
 // 🔥 TEST ROUTE
