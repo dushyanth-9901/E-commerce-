@@ -1,4 +1,4 @@
-
+// 📁 src/pages/Dashboard.jsx
 
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Footer from "../components/Footer";
 
-function Dashboard({ cart }) {
+function Dashboard({ cart, setCart }) {
 
   // 🔥 NAVIGATION
   const navigate = useNavigate();
@@ -89,6 +89,70 @@ function Dashboard({ cart }) {
 
 
 
+  // =====================================================
+  // 🛒 ADD TO CART WITH QUANTITY
+  // =====================================================
+  const addToCart = (product) => {
+
+    // ✅ CHECK PRODUCT EXISTS
+    const existingProduct =
+      cart.find(
+        (item) => item.id === product.id
+      );
+
+
+
+    // ✅ IF PRODUCT ALREADY EXISTS
+    if (existingProduct) {
+
+      const updatedCart =
+        cart.map((item) =>
+
+          item.id === product.id
+
+            ? {
+                ...item,
+                quantity:
+                  item.quantity + 1
+              }
+
+            : item
+
+        );
+
+
+
+      setCart(updatedCart);
+
+    }
+
+
+
+    // ✅ NEW PRODUCT
+    else {
+
+      setCart([
+
+        ...cart,
+
+        {
+          ...product,
+          quantity: 1
+        }
+
+      ]);
+
+    }
+
+
+
+    alert("Added To Cart ✅");
+
+  };
+
+
+
+
   // 🔥 LOADING SCREEN
   if (loading) {
 
@@ -110,11 +174,11 @@ function Dashboard({ cart }) {
     <div style={styles.page}>
 
       {/* 🔥 NAVBAR */}
-                <Navbar
-            cart={cart}
-            search={search}
-            setSearch={setSearch}
-          />
+      <Navbar
+        cart={cart}
+        search={search}
+        setSearch={setSearch}
+      />
 
 
 
@@ -136,10 +200,6 @@ function Dashboard({ cart }) {
 
 
 
-       
-
-
-
         {/* 🔥 PRODUCTS GRID */}
         <div style={styles.grid}>
 
@@ -150,6 +210,7 @@ function Dashboard({ cart }) {
               <ProductCard
                 key={product.id}
                 product={product}
+                addToCart={addToCart}
               />
 
             ))
@@ -163,12 +224,18 @@ function Dashboard({ cart }) {
           )}
 
         </div>
-        <Footer />
 
       </div>
 
+
+
+      {/* 🔥 FOOTER */}
+      <Footer />
+
     </div>
+
   );
+
 }
 
 
@@ -224,7 +291,9 @@ const styles = {
   // 🔥 LOADING
   loading: {
     textAlign: "center",
-    marginTop: "100px"
+    marginTop: "100px",
+    fontSize: "32px",
+    color: "#6c63ff"
   },
 
 

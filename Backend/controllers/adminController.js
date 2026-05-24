@@ -1,5 +1,5 @@
 // 🔥 DATABASE
-const db = require("../db");
+const db = require("../config/db");
 
 // 🔥 BCRYPT
 const bcrypt = require("bcryptjs");

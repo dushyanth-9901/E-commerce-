@@ -1,264 +1,203 @@
-// import { useNavigate } from "react-router-dom";
+import {
+  useNavigate
+} from "react-router-dom";
 
-// // 🔥 Navbar Component
-// function Navbar({ cart }) {
+import {
+  useState
+} from "react";
 
-//   const navigate = useNavigate();
+function Navbar({
+  cart,
+  search,
+  setSearch
+}) {
 
-//   // 🔥 CHECK LOGIN
-//   const isLoggedIn =
-//     localStorage.getItem("isLoggedIn");
-
-
-
-//   // 🔓 LOGOUT FUNCTION
-//   const logout = () => {
-
-//   // 🔥 REMOVE LOGIN DATA
-//   localStorage.removeItem("isLoggedIn");
-//   localStorage.removeItem("token");
-//   localStorage.removeItem("user");
-
-//   // 🔥 REDIRECT
-//   navigate("/");
-
-// };
-
-
-
-//   return (
-
-//     <div style={styles.navbar}>
-
-//       {/* 🔹 LOGO */}
-//       <h2 style={styles.logo}>
-//         ShopZone 🛒
-//       </h2>
-
-
-
-//       {/* 🔹 RIGHT SIDE */}
-//       <div style={styles.right}>
-
-//         {/* 🔹 LOGIN / LOGOUT */}
-//         {isLoggedIn ? (
-
-//           <button
-//             type = "button"
-//             style={styles.logoutBtn}
-//             onClick={logout}
-//           >
-//             Logout
-//           </button>
-
-//         ) : (
-
-//           <button
-//             type = "button"
-//             style={styles.loginBtn}
-//             onClick={() =>
-//               navigate("/login")
-//             }
-//           >
-//             Login
-//           </button>
-
-//         )}
-
-
-
-//         {/* 🔹 CART BUTTON */}
-//         <button
-//           type = "button"
-//           style={styles.cartBtn}
-//           onClick={() =>
-//             navigate("/cart")
-//           }
-//         >
-//           Cart ({cart.length})
-//         </button>
-
-//       </div>
-
-//     </div>
-
-//   );
-
-// }
-
-
-
-// const styles = {
-
-//   navbar: {
-//     display: "flex",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//     padding: "15px 30px",
-//     background: "#111",
-//     color: "white",
-//     position: "sticky",
-//     top: 0,
-//     zIndex: 1000
-//   },
-
-
-
-//   logo: {
-//     margin: 0
-//   },
-
-
-
-//   right: {
-//     display: "flex",
-//     gap: "10px",
-//     alignItems: "center"
-//   },
-
-
-
-//   cartBtn: {
-//     padding: "10px 15px",
-//     border: "none",
-//     borderRadius: "8px",
-//     cursor: "pointer",
-//     background: "#667eea",
-//     color: "white",
-//     fontWeight: "bold"
-//   },
-
-
-
-//   logoutBtn: {
-//     padding: "10px 15px",
-//     border: "none",
-//     borderRadius: "8px",
-//     cursor: "pointer",
-//     background: "crimson",
-//     color: "white",
-//     fontWeight: "bold"
-//   },
-
-
-
-//   loginBtn: {
-//     padding: "10px 15px",
-//     border: "none",
-//     borderRadius: "8px",
-//     cursor: "pointer",
-//     background: "#22c55e",
-//     color: "white",
-//     fontWeight: "bold"
-//   }
-
-// };
-
-// export default Navbar;
-import { useNavigate } from "react-router-dom";
-
-function Navbar({ cart, search, setSearch }) {
-
+  // =====================================================
   // 🔥 NAVIGATION
-  const navigate = useNavigate();
+  // =====================================================
+  const navigate =
+    useNavigate();
 
-  // 🔥 LOGIN STATUS
+  // =====================================================
+  // 🔥 USER DATA
+  // =====================================================
+  const user =
+    JSON.parse(
+      localStorage.getItem("user")
+    );
+
   const isLoggedIn =
-    localStorage.getItem("isLoggedIn");
+    localStorage.getItem(
+      "isLoggedIn"
+    );
 
+  // =====================================================
+  // 🔥 DROPDOWN
+  // =====================================================
+  const [showMenu, setShowMenu] =
+    useState(false);
 
+  // =====================================================
+  // 🔥 TOTAL CART COUNT
+  // =====================================================
+  const totalItems =
+    cart.reduce(
+
+      (acc, item) =>
+
+        acc + item.quantity,
+
+      0
+
+    );
 
   // =====================================================
   // 🔥 LOGOUT
   // =====================================================
   const logout = () => {
 
-    // 🔥 CLEAR STORAGE
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem(
+      "isLoggedIn"
+    );
 
-    // 🔥 REDIRECT
-    navigate("/");
+    localStorage.removeItem(
+      "token"
+    );
+
+    localStorage.removeItem(
+      "user"
+    );
+
+    navigate("/login");
 
   };
-
-
 
   return (
 
     <div style={styles.navbar}>
 
-
-      {/* =====================================================
-          🔥 LOGO
-      ===================================================== */}
+      {/* LOGO */}
       <h2
         style={styles.logo}
-        onClick={() => navigate("/")}
+        onClick={() =>
+          navigate("/")
+        }
       >
         ShopEase 🛍️
       </h2>
 
-
-
-
-
-      {/* =====================================================
-          🔍 SEARCH BAR CENTER
-      ===================================================== */}
+      {/* SEARCH */}
       <input
         type="text"
-        placeholder="Search products..."
+        placeholder="Search Products..."
         value={search}
         onChange={(e) =>
-          setSearch(e.target.value)
+          setSearch(
+            e.target.value
+          )
         }
         style={styles.search}
       />
 
-
-
-
-
-
-
-      {/* =====================================================
-          🔥 RIGHT SIDE BUTTONS
-      ===================================================== */}
+      {/* RIGHT */}
       <div style={styles.right}>
 
-
-        {/* 🛒 CART */}
-        <button
-          style={styles.cartBtn}
-          onClick={() => navigate("/cart")}
+        {/* CART */}
+        <div
+          style={styles.cartWrapper}
+          onClick={() =>
+            navigate("/cart")
+          }
         >
-          Cart ({cart.length})
-        </button>
 
+          🛒
 
+          <span style={styles.badge}>
+            {totalItems}
+          </span>
 
+        </div>
 
-
-        {/* 🔐 LOGIN / LOGOUT */}
-        {isLoggedIn ? (
+        {/* LOGIN */}
+        {!isLoggedIn ? (
 
           <button
-            style={styles.logoutBtn}
-            onClick={logout}
+            style={styles.loginBtn}
+            onClick={() =>
+              navigate("/login")
+            }
           >
-            Logout
+            Login
           </button>
 
         ) : (
 
-          <button
-            style={styles.loginBtn}
-            onClick={() => navigate("/login")}
+          <div
+            style={styles.profileWrapper}
           >
-            Login
-          </button>
+
+            {/* PROFILE ICON */}
+            <div
+              style={styles.profile}
+              onClick={() =>
+                setShowMenu(
+                  !showMenu
+                )
+              }
+            >
+
+              {user?.name
+                ?.charAt(0)
+                ?.toUpperCase()}
+
+            </div>
+
+            {/* DROPDOWN */}
+            {showMenu && (
+
+              <div
+                style={styles.dropdown}
+              >
+
+                <p
+                  style={styles.userName}
+                >
+                  {user?.name}
+                </p>
+
+                <button
+                  style={
+                    styles.menuBtn
+                  }
+                  onClick={() =>
+                    navigate("/cart")
+                  }
+                >
+                  My Cart
+                </button>
+
+                <button
+                  style={
+                    styles.menuBtn
+                  }
+                >
+                  Orders
+                </button>
+
+                <button
+                  style={
+                    styles.logoutBtn
+                  }
+                  onClick={logout}
+                >
+                  Logout
+                </button>
+
+              </div>
+
+            )}
+
+          </div>
 
         )}
 
@@ -270,60 +209,67 @@ function Navbar({ cart, search, setSearch }) {
 
 }
 
-
-
-
-
-
-// =====================================================
-// 🎨 STYLES
-// =====================================================
 const styles = {
 
-  // 🔥 NAVBAR
   navbar: {
     display: "flex",
-    justifyContent: "space-between",
+    justifyContent:
+      "space-between",
     alignItems: "center",
     padding: "15px 30px",
-    background: "#111",
+    background: "#111827",
     color: "#fff",
-    flexWrap: "wrap",
-    gap: "20px"
+    position: "sticky",
+    top: 0,
+    zIndex: 999,
+    gap: "20px",
+    flexWrap: "wrap"
   },
 
-
-
-  // 🔥 LOGO
   logo: {
-    cursor: "pointer"
+    cursor: "pointer",
+    fontSize: "28px"
   },
 
-
-
-  // 🔍 SEARCH
   search: {
     flex: 1,
-    maxWidth: "500px",
+    maxWidth: "550px",
     padding: "12px",
-    borderRadius: "8px",
+    borderRadius: "10px",
     border: "none",
     outline: "none",
     fontSize: "15px"
   },
 
-
-
-  // 🔥 RIGHT SIDE
   right: {
     display: "flex",
-    gap: "15px"
+    alignItems: "center",
+    gap: "25px"
   },
 
+  cartWrapper: {
+    position: "relative",
+    fontSize: "28px",
+    cursor: "pointer"
+  },
 
+  badge: {
+    position: "absolute",
+    top: "-10px",
+    right: "-12px",
+    background: "crimson",
+    color: "#fff",
+    width: "22px",
+    height: "22px",
+    borderRadius: "50%",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontSize: "12px",
+    fontWeight: "bold"
+  },
 
-  // 🛒 CART BUTTON
-  cartBtn: {
+  loginBtn: {
     padding: "10px 18px",
     border: "none",
     borderRadius: "8px",
@@ -333,30 +279,59 @@ const styles = {
     fontWeight: "bold"
   },
 
-
-
-  // 🔐 LOGIN BUTTON
-  loginBtn: {
-    padding: "10px 18px",
-    border: "none",
-    borderRadius: "8px",
-    background: "green",
-    color: "#fff",
-    cursor: "pointer",
-    fontWeight: "bold"
+  profileWrapper: {
+    position: "relative"
   },
 
+  profile: {
+    width: "45px",
+    height: "45px",
+    borderRadius: "50%",
+    background: "#6c63ff",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: "18px"
+  },
 
+  dropdown: {
+    position: "absolute",
+    top: "60px",
+    right: 0,
+    background: "#fff",
+    color: "#111",
+    width: "220px",
+    borderRadius: "12px",
+    padding: "15px",
+    boxShadow:
+      "0 5px 15px rgba(0,0,0,0.2)"
+  },
 
-  // 🔓 LOGOUT BUTTON
-  logoutBtn: {
-    padding: "10px 18px",
+  userName: {
+    fontWeight: "bold",
+    marginBottom: "15px"
+  },
+
+  menuBtn: {
+    width: "100%",
+    padding: "10px",
     border: "none",
+    background: "#f3f4f6",
+    marginBottom: "10px",
     borderRadius: "8px",
+    cursor: "pointer"
+  },
+
+  logoutBtn: {
+    width: "100%",
+    padding: "10px",
+    border: "none",
     background: "crimson",
     color: "#fff",
-    cursor: "pointer",
-    fontWeight: "bold"
+    borderRadius: "8px",
+    cursor: "pointer"
   }
 
 };

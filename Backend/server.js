@@ -7,12 +7,12 @@ const app = express();
 
 
 // 🔥 IMPORT ROUTES
-const userRoutes = require("./routes/users");
-const productRoutes = require("./routes/products");
-const adminRoutes = require("./routes/admin");
+const userRoutes = require("./routes/userRoutes");
+const productRoutes = require("./routes/productRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
-
+const orderRoutes = require("./routes/orderRoutes");
 
 
 // 🔥 MIDDLEWARE
@@ -23,13 +23,15 @@ app.use(express.json());
 // 🔥 ROUTES
 app.use("/api/auth",authRoutes);
 
-app.use("/api/users", userRoutes);
-
 app.use("/api/products", productRoutes);
 
 app.use("/api/admin", adminRoutes);
 
 app.use("/api/payment", paymentRoutes);
+
+app.use("/api/users", userRoutes);
+
+app.use("/api/orders", orderRoutes);
 
 
 // 🔥 TEST ROUTE

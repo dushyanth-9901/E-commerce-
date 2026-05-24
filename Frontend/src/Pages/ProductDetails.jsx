@@ -1,5 +1,3 @@
-// 📁 src/pages/ProductDetails.jsx
-
 import {
   useParams,
   useNavigate
@@ -7,478 +5,289 @@ import {
 
 import {
   useEffect,
-  useState
+  useState,
+  useMemo
 } from "react";
 
 import axios from "axios";
 
-function ProductDetails({
-  cart,
-  setCart
-}) {
+function ProductDetails({ cart, setCart }) {
 
-  // =====================================================
-  // 🔥 GET PRODUCT ID
-  // =====================================================
   const { id } = useParams();
-
-
-
-  // =====================================================
-  // 🔥 NAVIGATION
-  // =====================================================
   const navigate = useNavigate();
 
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [qty, setQty] = useState(1);
+  const [selectedImage, setSelectedImage] = useState("");
 
-
-  // =====================================================
-  // 🔥 PRODUCT STATE
-  // =====================================================
-  const [product, setProduct] =
-    useState(null);
-
-
-
-  // =====================================================
-  // 🔥 QUANTITY STATE
-  // =====================================================
-  const [qty, setQty] =
-    useState(1);
-
-
-
-
-  // =====================================================
-  // 🔥 FETCH PRODUCT FROM BACKEND
-  // =====================================================
+  // FETCH PRODUCT
   useEffect(() => {
-
     const fetchProduct = async () => {
-
       try {
+        const res = await axios.get("http://localhost:5000/api/products");
 
-        // 🔥 GET PRODUCTS FROM BACKEND
-        const res = await axios.get(
-          "http://localhost:5000/api/products"
+        const foundProduct = res.data.find(
+          (item) => item.id === Number(id)
         );
 
-
-
-        // 🔥 FIND PRODUCT
-        const foundProduct =
-          res.data.find(
-            (item) =>
-              item.id === Number(id)
-          );
-
-
-
-        // 🔥 SAVE PRODUCT
         setProduct(foundProduct);
+        setSelectedImage(foundProduct.image);
+        setLoading(false);
 
       } catch (error) {
-
         console.log(error);
-
-        alert("Failed To Load Product");
-
+        setLoading(false);
       }
-
     };
 
-
-
     fetchProduct();
-
   }, [id]);
 
+  const productImages = useMemo(() => {
+    if (!product) return [];
 
+    let extraImages = [];
 
+    try {
+      extraImages = JSON.parse(product.images || "[]");
+    } catch {
+      extraImages = [];
+    }
 
-  // =====================================================
-  // 🔥 LOADING SCREEN
-  // =====================================================
-  if (!product) {
+    return [product.image, ...extraImages.filter(Boolean)];
+  }, [product]);
 
-    return (
-
-      <h1 style={styles.loading}>
-        Loading Product...
-      </h1>
-
-    );
-
+  if (loading) {
+    return <h1 style={styles.loading}>Loading Product...</h1>;
   }
 
-
-
-
-  // =====================================================
-  // 🛒 ADD TO CART
-  // =====================================================
   const addToCart = () => {
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
 
-    // 🔥 CHECK LOGIN FIRST
-    const isLoggedIn =
-      localStorage.getItem("isLoggedIn");
-
-
-
-    // ❌ IF NOT LOGGED IN
     if (!isLoggedIn) {
-
       alert("Please Login First");
-
-      // 🔥 REDIRECT LOGIN PAGE
       navigate("/login");
-
       return;
-
     }
 
+    const existing = cart.find(item => item.id === product.id);
 
-
-    // 🔥 CHECK EXISTING PRODUCT
-    const existing = cart.find(
-      (item) =>
-        item.id === product.id
-    );
-
-
-
-    // ✅ PRODUCT ALREADY EXISTS
     if (existing) {
-
-      const updatedCart =
-        cart.map((item) =>
-
-          item.id === product.id
-
-            ? {
-                ...item,
-                quantity:
-                  item.quantity + qty
-              }
-
-            : item
-
-        );
-
-
-
-      // 🔥 UPDATE CART
+      const updatedCart = cart.map(item =>
+        item.id === product.id
+          ? { ...item, quantity: item.quantity + qty }
+          : item
+      );
       setCart(updatedCart);
-
     } else {
-
-      // ✅ NEW PRODUCT
-      setCart([
-
-        ...cart,
-
-        {
-          ...product,
-          quantity: qty
-        }
-
-      ]);
-
+      setCart([...cart, { ...product, quantity: qty }]);
     }
 
-
-
-    alert("✅ Added To Cart");
-
+    alert("Added To Cart ✅");
   };
 
-
-
-
-  // =====================================================
-  // ⚡ BUY NOW
-  // =====================================================
   const buyNow = () => {
-
-    // 🔥 CHECK LOGIN
-    const isLoggedIn =
-      localStorage.getItem("isLoggedIn");
-
-
-
-    // ❌ NOT LOGGED IN
-    if (!isLoggedIn) {
-
-      alert("Please Login First");
-
-      navigate("/login");
-
-      return;
-
-    }
-
-
-
-    // 🔥 ADD PRODUCT
     addToCart();
-
-
-
-    // 🔥 GO TO CART PAGE
     navigate("/cart");
-
   };
 
-
-
-
-  // =====================================================
-  // 🔥 UI
-  // =====================================================
   return (
-
     <div style={styles.container}>
 
-      {/* =====================================================
-          🔥 LEFT IMAGE
-      ===================================================== */}
-      <div style={styles.imageBox}>
+      {/* LEFT IMAGE SECTION */}
+      <div style={styles.imageGallery}>
 
-        <img
-          src={product.image}
-          alt={product.name}
-          style={styles.image}
-        />
+        <div style={styles.mainImageBox}>
+          <img
+            src={selectedImage}
+            alt={product.name}
+            style={styles.mainImage}
+          />
+        </div>
+
+        <div style={styles.thumbnailRow}>
+          {productImages.map((img, index) => (
+            <img
+              key={index}
+              src={img}
+              alt=""
+              style={{
+                ...styles.thumbnail,
+                border: selectedImage === img
+                  ? "3px solid #6c63ff"
+                  : "2px solid #ddd"
+              }}
+              onClick={() => setSelectedImage(img)}
+            />
+          ))}
+        </div>
 
       </div>
 
+      {/* RIGHT SIDE */}
+      <div style={styles.right}>
 
+        <h1 style={styles.title}>{product.name}</h1>
 
+        <div style={styles.rating}>⭐⭐⭐⭐☆ (4.5)</div>
 
-      {/* =====================================================
-          🔥 RIGHT DETAILS
-      ===================================================== */}
-      <div style={styles.details}>
+        <h2 style={styles.price}>₹ {product.price}</h2>
 
-        {/* 🔥 PRODUCT NAME */}
-        <h1>
-          {product.name}
-        </h1>
-
-        {/* 🔥 DESCRIPTION */}
-        <p style={styles.description}>
-
-          {
-            product.description
-              || "No Description"
-          }
-
+        <p style={styles.stock}>
+          {product.stock > 0 ? "✅ In Stock" : "❌ Out Of Stock"}
         </p>
 
-        {/* 🔥 PRICE */}
-        <h2 style={styles.price}>
+        <p style={styles.delivery}>🚚 Free Delivery By Tomorrow</p>
 
-          ₹ {product.price}
+        <div style={styles.section}>
+          <h3>Product Description</h3>
+          <p style={styles.description}>
+            {product.description ||
+              "Premium quality product with modern design and excellent performance."}
+          </p>
+        </div>
 
-        </h2>
+        <div style={styles.section}>
+          <h3>Features</h3>
+          <ul style={styles.features}>
+            <li>Premium Build Quality</li>
+            <li>Long Lasting Performance</li>
+            <li>Stylish Design</li>
+            <li>Best Seller Product</li>
+          </ul>
+        </div>
 
-
-
-
-        {/* =====================================================
-            🔥 QUANTITY SECTION
-        ===================================================== */}
         <div style={styles.qtyContainer}>
-
-          {/* 🔥 MINUS BUTTON */}
           <button
-            type="button"
             style={styles.qtyBtn}
-            onClick={() =>
-              setQty(
-                qty > 1
-                  ? qty - 1
-                  : 1
-              )
-            }
+            onClick={() => setQty(qty > 1 ? qty - 1 : 1)}
           >
-            -
+            −
           </button>
 
+          <span style={styles.qtyText}>{qty}</span>
 
-
-          {/* 🔥 QUANTITY */}
-          <span style={styles.qtyText}>
-            {qty}
-          </span>
-
-
-
-          {/* 🔥 PLUS BUTTON */}
           <button
-            type="button"
             style={styles.qtyBtn}
-            onClick={() =>
-              setQty(qty + 1)
-            }
+            onClick={() => setQty(qty + 1)}
           >
             +
           </button>
-
         </div>
 
-
-
-
-        {/* =====================================================
-            🔥 ACTION BUTTONS
-        ===================================================== */}
-        <div style={styles.buttonContainer}>
-
-          {/* 🛒 ADD TO CART */}
-          <button
-            type="button"
-            style={styles.cartBtn}
-            onClick={addToCart}
-          >
+        <div style={styles.buttons}>
+          <button style={styles.cartBtn} onClick={addToCart}>
             Add To Cart
           </button>
 
-
-
-          {/* ⚡ BUY NOW */}
-          <button
-            type="button"
-            style={styles.buyBtn}
-            onClick={buyNow}
-          >
+          <button style={styles.buyBtn} onClick={buyNow}>
             Buy Now
           </button>
-
         </div>
 
       </div>
-
     </div>
-
   );
-
 }
 
-
-
-
-// =====================================================
-// 🎨 STYLES
-// =====================================================
+// ================= STYLES =================
 const styles = {
 
-  // 🔥 MAIN CONTAINER
   container: {
     display: "flex",
     gap: "40px",
     padding: "40px",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    alignItems: "flex-start",
+    background: "#f5f5f5",
     minHeight: "100vh",
-    background: "#f4f4f4"
+    flexWrap: "wrap"
   },
 
+  imageGallery: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "15px",
+    alignItems: "center"
+  },
 
-
-  // 🔥 IMAGE BOX
-  imageBox: {
+  mainImageBox: {
+    width: "360px",
+    height: "360px",
     background: "#fff",
-    padding: "20px",
     borderRadius: "15px",
-    boxShadow:
-      "0 5px 15px rgba(0,0,0,0.1)"
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "10px"
   },
 
-
-
-  // 🔥 PRODUCT IMAGE
-  image: {
-    width: "350px",
-    height: "350px",
-    objectFit: "cover",
+  mainImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "contain",
     borderRadius: "10px"
   },
 
+  thumbnailRow: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap"
+  },
 
+  thumbnail: {
+    width: "70px",
+    height: "70px",
+    objectFit: "cover",
+    borderRadius: "10px",
+    cursor: "pointer"
+  },
 
-  // 🔥 DETAILS BOX
-  details: {
-    maxWidth: "500px",
+  right: {
+    flex: 1,
     background: "#fff",
     padding: "30px",
-    borderRadius: "15px",
-    boxShadow:
-      "0 5px 15px rgba(0,0,0,0.1)"
+    borderRadius: "15px"
   },
 
+  title: { fontSize: "35px", marginBottom: "10px" },
+  rating: { color: "#f59e0b", fontSize: "18px", marginBottom: "20px" },
+  price: { color: "#6c63ff", marginBottom: "15px" },
+  stock: { color: "green", fontWeight: "bold" },
+  delivery: { marginTop: "10px", color: "#444" },
 
+  section: { marginTop: "30px" },
+  description: { color: "#555", lineHeight: "1.8" },
+  features: { lineHeight: "2" },
 
-  // 🔥 DESCRIPTION
-  description: {
-    color: "#555",
-    lineHeight: "1.6"
-  },
-
-
-
-  // 🔥 PRICE
-  price: {
-    color: "#6c63ff",
-    margin: "20px 0"
-  },
-
-
-
-  // 🔥 QUANTITY CONTAINER
   qtyContainer: {
     display: "flex",
     alignItems: "center",
     gap: "20px",
-    marginBottom: "25px"
+    marginTop: "30px"
   },
 
-
-
-  // 🔥 QUANTITY BUTTON
   qtyBtn: {
     width: "40px",
     height: "40px",
     border: "none",
     background: "#6c63ff",
     color: "#fff",
-    fontSize: "20px",
     borderRadius: "8px",
-    cursor: "pointer"
+    cursor: "pointer",
+    fontSize: "20px"
   },
 
+  qtyText: { fontSize: "22px", fontWeight: "bold" },
 
-
-  // 🔥 QUANTITY TEXT
-  qtyText: {
-    fontSize: "20px",
-    fontWeight: "bold"
-  },
-
-
-
-  // 🔥 BUTTON CONTAINER
-  buttonContainer: {
+  buttons: {
     display: "flex",
     gap: "20px",
+    marginTop: "30px",
     flexWrap: "wrap"
   },
 
-
-
-  // 🛒 ADD TO CART BUTTON
   cartBtn: {
-    padding: "12px 25px",
+    padding: "14px 30px",
     border: "none",
     background: "#6c63ff",
     color: "#fff",
@@ -487,11 +296,8 @@ const styles = {
     fontWeight: "bold"
   },
 
-
-
-  // ⚡ BUY NOW BUTTON
   buyBtn: {
-    padding: "12px 25px",
+    padding: "14px 30px",
     border: "none",
     background: "#111",
     color: "#fff",
@@ -500,14 +306,10 @@ const styles = {
     fontWeight: "bold"
   },
 
-
-
-  // 🔥 LOADING TEXT
   loading: {
     textAlign: "center",
     marginTop: "100px"
   }
-
 };
 
 export default ProductDetails;
