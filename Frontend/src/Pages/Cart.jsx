@@ -8,36 +8,34 @@ import {
   useState
 } from "react";
 
-function Cart({
-  cart,
-  setCart
-}) {
+function Cart({ cart, setCart }) {
 
-  // =====================================================
-  // 🔥 NAVIGATION
-  // =====================================================
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
-  // =====================================================
-  // 🔥 DELIVERY FORM
-  // =====================================================
-  const [form, setForm] =
+
+
+  // ============================================
+  // 🔥 ADDRESS STATE
+  // ============================================
+  const [address, setAddress] =
     useState({
 
-      name: "",
+      fullName: "",
       phone: "",
       state: "",
       district: "",
+      taluk: "",
       village: "",
       pincode: "",
-      address: ""
+      addressLine: ""
 
     });
 
-  // =====================================================
-  // 🔥 REMOVE ITEM
-  // =====================================================
+
+
+  // ============================================
+  // ❌ REMOVE PRODUCT
+  // ============================================
   const removeFromCart = (id) => {
 
     const updatedCart =
@@ -48,360 +46,338 @@ function Cart({
 
     setCart(updatedCart);
 
-  };
-
-  // =====================================================
-  // 🔥 QUANTITY +
-  // =====================================================
-  const increaseQty = (id) => {
-
-    const updatedCart =
-      cart.map((item) =>
-
-        item.id === id
-
-          ? {
-              ...item,
-              quantity:
-                item.quantity + 1
-            }
-
-          : item
-
-      );
-
-    setCart(updatedCart);
-
-  };
-
-  // =====================================================
-  // 🔥 QUANTITY -
-  // =====================================================
-  const decreaseQty = (id) => {
-
-    const updatedCart =
-      cart.map((item) =>
-
-        item.id === id
-
-          ? {
-              ...item,
-              quantity:
-                item.quantity > 1
-                  ? item.quantity - 1
-                  : 1
-            }
-
-          : item
-
-      );
-
-    setCart(updatedCart);
-
-  };
-
-  // =====================================================
-  // 🔥 TOTAL
-  // =====================================================
-  const subtotal =
-    cart.reduce(
-
-      (acc, item) =>
-
-        acc +
-        item.price *
-        item.quantity,
-
-      0
-
+    localStorage.setItem(
+      "cart",
+      JSON.stringify(updatedCart)
     );
 
-  const shipping = 99;
+  };
 
-  const total =
-    subtotal + shipping;
 
-  // =====================================================
-  // 🔥 HANDLE PAYMENT
-  // =====================================================
-  const handlePayment =
-    async () => {
 
-      try {
+  // ============================================
+  // 💳 HANDLE PAYMENT
+  // ============================================
+  const handlePayment = async (
+    product
+  ) => {
 
-        // VALIDATION
-        if (
+    try {
 
-          !form.name ||
-          !form.phone ||
-          !form.state ||
-          !form.district ||
-          !form.village ||
-          !form.pincode ||
-          !form.address
+      // ============================================
+      // 🔥 CREATE ORDER
+      // ============================================
+      const res = await axios.post(
 
-        ) {
+        "http://localhost:5000/api/payment/create-order",
 
-          alert(
-            "Please Fill Delivery Details"
-          );
-
-          return;
-
+        {
+          amount:
+            product.price *
+            product.quantity
         }
 
-        // CREATE ORDER
-        const res =
-          await axios.post(
+      );
 
-            "http://localhost:5000/api/payment/create-order",
 
-            {
-              amount: total
-            }
 
-          );
+      // ============================================
+      // 🔥 RAZORPAY
+      // ============================================
+      const options = {
 
-        // RAZORPAY
-        const options = {
+        key:
+          "rzp_test_SsfWvZhtYI6dCX",
 
-          key:
-            "rzp_test_SsfWvZhtYI6dCX",
+        amount:
+          res.data.amount,
 
-          amount:
-            res.data.amount,
+        currency: "INR",
 
-          currency:
-            "INR",
+        name: "ShopEase",
 
-          name:
-            "ShopEase",
+        description:
+          product.name,
 
-          description:
-            "Order Payment",
+        order_id:
+          res.data.id,
 
-          order_id:
-            res.data.id,
 
-          handler:
-            function (response) {
 
-              // SAVE ORDER
-              const oldOrders =
-                JSON.parse(
+        // ============================================
+        // ✅ SUCCESS
+        // ============================================
+        handler: async function (
+          response
+        ) {
 
-                  localStorage.getItem(
-                    "orders"
-                  )
+          try {
 
-                ) || [];
+            const user =
+              JSON.parse(
 
-              oldOrders.push({
-
-                items: cart,
-
-                total,
-
-                paymentId:
-                  response.razorpay_payment_id,
-
-                delivery:
-                  form
-
-              });
-
-              localStorage.setItem(
-
-                "orders",
-
-                JSON.stringify(
-                  oldOrders
+                localStorage.getItem(
+                  "user"
                 )
 
               );
 
-              // CLEAR CART
-              setCart([]);
 
-              // SUCCESS
-              alert(
-                "Payment Successful ✅"
+
+            // ============================================
+            // 🔥 SAVE ORDER
+            // ============================================
+            await axios.post(
+
+              "http://localhost:5000/api/orders/save",
+
+              {
+
+                user_email:
+                  user.email,
+
+                product_name:
+                  product.name,
+
+                amount:
+                  product.price *
+                  product.quantity,
+
+                payment_id:
+                  response.razorpay_payment_id,
+
+
+
+                full_name:
+                  address.fullName,
+
+                phone:
+                  address.phone,
+
+                state:
+                  address.state,
+
+                district:
+                  address.district,
+
+                taluk:
+                  address.taluk,
+
+                village:
+                  address.village,
+
+                pincode:
+                  address.pincode,
+
+                address_line:
+                  address.addressLine
+
+              }
+
+            );
+
+
+
+            // ============================================
+            // 🔥 REMOVE PRODUCT
+            // ============================================
+            const updatedCart =
+
+              cart.filter(
+                (item) =>
+                  item.id !==
+                  product.id
               );
 
-              navigate("/success");
 
-            },
 
-          theme: {
-            color: "#6c63ff"
+            setCart(updatedCart);
+
+
+
+            localStorage.setItem(
+
+              "cart",
+
+              JSON.stringify(
+                updatedCart
+              )
+
+            );
+
+
+
+            // ============================================
+            // ✅ SUCCESS
+            // ============================================
+            alert(
+              "Payment Successful ✅"
+            );
+
+
+
+            navigate("/success");
+
+          } catch (error) {
+
+            console.log(error);
+
+            alert(
+              "Order Save Failed"
+            );
+
           }
 
-        };
+        },
 
-        const razorpay =
-          new window.Razorpay(
-            options
-          );
 
-        razorpay.open();
 
-      } catch (error) {
+        // ============================================
+        // 🎨 THEME
+        // ============================================
+        theme: {
+          color: "#111"
+        }
 
-        console.log(error);
+      };
 
-        alert(
-          "Payment Failed ❌"
+
+
+      const razorpay =
+        new window.Razorpay(
+          options
         );
 
-      }
+      razorpay.open();
 
-    };
+    } catch (error) {
+
+      console.log(error);
+
+      alert("Payment Failed ❌");
+
+    }
+
+  };
+
+
 
   return (
 
     <div style={styles.container}>
 
-      {/* LEFT */}
-      <div style={styles.left}>
+      <h1 style={styles.heading}>
+        My Cart 🛒
+      </h1>
 
-        <h1 style={styles.heading}>
-          Shopping Cart 🛒
-        </h1>
 
-        {/* EMPTY */}
-        {cart.length === 0 ? (
 
-          <div style={styles.empty}>
+      {cart.length === 0 ? (
 
-            <h2>
-              Cart Is Empty 😢
-            </h2>
+        <h2>
+          No Products In Cart
+        </h2>
 
-            <button
-              style={styles.shopBtn}
-              onClick={() =>
-                navigate("/")
-              }
-            >
-              Continue Shopping
-            </button>
+      ) : (
 
-          </div>
+        cart.map((product) => (
 
-        ) : (
+          <div
+            key={product.id}
+            style={styles.card}
+          >
 
-          cart.map((item) => (
+            {/* IMAGE */}
+            <img
+              src={product.image}
+              alt={product.name}
+              style={styles.image}
+            />
 
-            <div
-              key={item.id}
-              style={styles.card}
-            >
 
-              {/* IMAGE */}
-              <img
-                src={item.image}
-                alt={item.name}
-                style={styles.image}
-              />
 
-              {/* DETAILS */}
-              <div style={styles.info}>
+            {/* DETAILS */}
+            <div style={styles.details}>
 
-                <h2>
-                  {item.name}
-                </h2>
+              <h2>
+                {product.name}
+              </h2>
 
-                <p style={styles.desc}>
-                  Premium quality
-                  ecommerce product.
-                </p>
+              <p>
+                ₹ {product.price}
+              </p>
 
-                <h3>
-                  ₹ {item.price}
-                </h3>
+              <p>
+                Qty:
+                {" "}
+                {product.quantity}
+              </p>
 
-                {/* QUANTITY */}
-                <div
-                  style={
-                    styles.qtyBox
-                  }
-                >
+            </div>
 
-                  <button
-                    style={
-                      styles.qtyBtn
-                    }
-                    onClick={() =>
-                      decreaseQty(
-                        item.id
-                      )
-                    }
-                  >
-                    −
-                  </button>
 
-                  <span>
-                    {
-                      item.quantity
-                    }
-                  </span>
 
-                  <button
-                    style={
-                      styles.qtyBtn
-                    }
-                    onClick={() =>
-                      increaseQty(
-                        item.id
-                      )
-                    }
-                  >
-                    +
-                  </button>
+            {/* BUTTONS */}
+            <div style={styles.buttons}>
 
-                </div>
-
-              </div>
-
-              {/* REMOVE */}
               <button
-                style={
-                  styles.removeBtn
-                }
+
+                style={styles.buyBtn}
+
                 onClick={() =>
-                  removeFromCart(
-                    item.id
+                  handlePayment(
+                    product
                   )
                 }
+
+              >
+                Buy Now
+              </button>
+
+
+
+              <button
+
+                style={styles.removeBtn}
+
+                onClick={() =>
+                  removeFromCart(
+                    product.id
+                  )
+                }
+
               >
                 Remove
               </button>
 
             </div>
 
-          ))
+          </div>
 
-        )}
+        ))
 
-      </div>
+      )}
 
-      {/* RIGHT */}
-      <div style={styles.right}>
+
+
+      {/* ============================================
+          🔥 ADDRESS FORM
+      ============================================ */}
+      <div style={styles.form}>
 
         <h2>
-          Delivery Details
+          Delivery Address
         </h2>
 
-        {/* FORM */}
         <input
-          type="text"
           placeholder="Full Name"
           style={styles.input}
           onChange={(e) =>
-            setForm({
+            setAddress({
 
-              ...form,
-              name:
+              ...address,
+
+              fullName:
                 e.target.value
 
             })
@@ -409,13 +385,13 @@ function Cart({
         />
 
         <input
-          type="text"
-          placeholder="Phone Number"
+          placeholder="Phone"
           style={styles.input}
           onChange={(e) =>
-            setForm({
+            setAddress({
 
-              ...form,
+              ...address,
+
               phone:
                 e.target.value
 
@@ -424,13 +400,13 @@ function Cart({
         />
 
         <input
-          type="text"
           placeholder="State"
           style={styles.input}
           onChange={(e) =>
-            setForm({
+            setAddress({
 
-              ...form,
+              ...address,
+
               state:
                 e.target.value
 
@@ -439,13 +415,13 @@ function Cart({
         />
 
         <input
-          type="text"
           placeholder="District"
           style={styles.input}
           onChange={(e) =>
-            setForm({
+            setAddress({
 
-              ...form,
+              ...address,
+
               district:
                 e.target.value
 
@@ -454,13 +430,28 @@ function Cart({
         />
 
         <input
-          type="text"
-          placeholder="Village / City"
+          placeholder="Taluk"
           style={styles.input}
           onChange={(e) =>
-            setForm({
+            setAddress({
 
-              ...form,
+              ...address,
+
+              taluk:
+                e.target.value
+
+            })
+          }
+        />
+
+        <input
+          placeholder="Village"
+          style={styles.input}
+          onChange={(e) =>
+            setAddress({
+
+              ...address,
+
               village:
                 e.target.value
 
@@ -469,13 +460,13 @@ function Cart({
         />
 
         <input
-          type="text"
           placeholder="Pincode"
           style={styles.input}
           onChange={(e) =>
-            setForm({
+            setAddress({
 
-              ...form,
+              ...address,
+
               pincode:
                 e.target.value
 
@@ -484,50 +475,19 @@ function Cart({
         />
 
         <textarea
-          placeholder="Full Address"
+          placeholder="Address"
           style={styles.textarea}
           onChange={(e) =>
-            setForm({
+            setAddress({
 
-              ...form,
-              address:
+              ...address,
+
+              addressLine:
                 e.target.value
 
             })
           }
         />
-
-        {/* SUMMARY */}
-        <div style={styles.summary}>
-
-          <h2>
-            Order Summary
-          </h2>
-
-          <p>
-            Subtotal:
-            ₹ {subtotal}
-          </p>
-
-          <p>
-            Shipping:
-            ₹ {shipping}
-          </p>
-
-          <h2>
-            Total:
-            ₹ {total}
-          </h2>
-
-        </div>
-
-        {/* PAYMENT */}
-        <button
-          style={styles.payBtn}
-          onClick={handlePayment}
-        >
-          Proceed To Payment
-        </button>
 
       </div>
 
@@ -537,40 +497,25 @@ function Cart({
 
 }
 
+
+
 const styles = {
 
   container: {
-    display: "flex",
-    gap: "30px",
-    padding: "30px",
-    background: "#f5f5f5",
-    minHeight: "100vh",
-    flexWrap: "wrap"
-  },
-
-  left: {
-    flex: 2
-  },
-
-  right: {
-    flex: 1,
-    background: "#fff",
-    padding: "25px",
-    borderRadius: "15px",
-    height: "fit-content"
+    padding: "30px"
   },
 
   heading: {
-    marginBottom: "25px"
+    marginBottom: "30px"
   },
 
   card: {
     display: "flex",
-    alignItems: "center",
     gap: "20px",
+    alignItems: "center",
     background: "#fff",
     padding: "20px",
-    borderRadius: "15px",
+    borderRadius: "12px",
     marginBottom: "20px"
   },
 
@@ -581,35 +526,27 @@ const styles = {
     borderRadius: "10px"
   },
 
-  info: {
+  details: {
     flex: 1
   },
 
-  desc: {
-    color: "#666",
-    margin: "10px 0"
-  },
-
-  qtyBox: {
+  buttons: {
     display: "flex",
-    alignItems: "center",
-    gap: "15px",
-    marginTop: "15px"
+    flexDirection: "column",
+    gap: "10px"
   },
 
-  qtyBtn: {
-    width: "35px",
-    height: "35px",
-    border: "none",
-    background: "#6c63ff",
+  buyBtn: {
+    padding: "10px",
+    background: "#111",
     color: "#fff",
+    border: "none",
     borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "18px"
+    cursor: "pointer"
   },
 
   removeBtn: {
-    padding: "10px 15px",
+    padding: "10px",
     background: "crimson",
     color: "#fff",
     border: "none",
@@ -617,55 +554,24 @@ const styles = {
     cursor: "pointer"
   },
 
+  form: {
+    marginTop: "40px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "15px"
+  },
+
   input: {
-    width: "100%",
     padding: "12px",
-    marginBottom: "15px",
     borderRadius: "8px",
-    border: "1px solid #ddd"
+    border: "1px solid #ccc"
   },
 
   textarea: {
-    width: "100%",
-    height: "100px",
     padding: "12px",
     borderRadius: "8px",
-    border: "1px solid #ddd",
-    marginBottom: "20px"
-  },
-
-  summary: {
-    marginTop: "20px",
-    lineHeight: "2"
-  },
-
-  payBtn: {
-    width: "100%",
-    padding: "14px",
-    background: "#111",
-    color: "#fff",
-    border: "none",
-    borderRadius: "10px",
-    cursor: "pointer",
-    marginTop: "20px",
-    fontWeight: "bold"
-  },
-
-  empty: {
-    background: "#fff",
-    padding: "50px",
-    textAlign: "center",
-    borderRadius: "15px"
-  },
-
-  shopBtn: {
-    padding: "12px 20px",
-    border: "none",
-    background: "#6c63ff",
-    color: "#fff",
-    borderRadius: "8px",
-    marginTop: "20px",
-    cursor: "pointer"
+    border: "1px solid #ccc",
+    minHeight: "120px"
   }
 
 };

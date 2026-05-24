@@ -24,6 +24,7 @@
     "multer-storage-cloudinary": "^4.0.0",
     "mysql2": "^3.22.3",
     "nodemon": "^3.1.14",
-    "razorpay": "^2.9.6"
+    "razorpay": "^2.9.6",
+    "recharts": "^3.8.1"
   }
 }

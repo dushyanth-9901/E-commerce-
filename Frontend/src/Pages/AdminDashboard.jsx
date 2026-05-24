@@ -369,6 +369,15 @@ function AdminDashboard() {
     ).length;
 
   // =====================================================
+  // 🔥 CANCELLED ORDERS
+  // =====================================================
+    const cancelledOrders =
+      orders.filter(
+        (item) =>
+          item.status === "Cancelled"
+      ).length;
+
+  // =====================================================
   // 🔥 OUT OF STOCK
   // =====================================================
   const outOfStock =
@@ -415,10 +424,56 @@ function AdminDashboard() {
     }
   ];
 
-  const COLORS = [
-    "#6c63ff",
-    "#ff4d4d"
+// =====================================================
+// 🔥 ORDER ANALYTICS DATA
+// =====================================================
+
+   const orderStats = [
+
+  {
+    name: "Pending",
+    value: pendingOrders
+  },
+
+  {
+    name: "Delivered",
+    value: deliveredOrders
+  },
+
+  {
+    name: "Cancelled",
+    value: cancelledOrders
+  }
+
+];
+
+// =====================================================
+// 🔥 PIE CHART DATA
+// =====================================================
+const pieData = [
+
+  {
+    name: "Pending",
+    value: pendingOrders
+  },
+
+  {
+    name: "Delivered",
+    value: deliveredOrders
+  },
+
+  {
+    name: "Cancelled",
+    value: cancelledOrders
+  }
+
   ];
+
+  const COLORS = [
+  "#f59e0b",
+  "#10b981",
+  "#ef4444"
+];
 
   // =====================================================
   // 🔥 LOADING
@@ -639,7 +694,85 @@ function AdminDashboard() {
 
                   </PieChart>
 
-                </ResponsiveContainer>
+                            </ResponsiveContainer>
+                            {/* ===================================================== */
+            /* 🔥 ORDER ANALYTICS BAR CHART */
+            /* ===================================================== */}
+            <div style={styles.card}>
+
+              <h2>Orders Analytics</h2>
+
+              <ResponsiveContainer
+                width="100%"
+                height={300}
+              >
+
+                <BarChart data={orderStats}>
+
+                  <XAxis dataKey="name" />
+
+                  <YAxis />
+
+                  <Tooltip />
+
+                  <Bar
+                    dataKey="value"
+                    fill="#6c63ff"
+                  />
+
+                </BarChart>
+
+              </ResponsiveContainer>
+
+            </div>
+
+
+
+
+
+            {/* ===================================================== */
+            /* 🔥 ORDER STATUS PIE CHART */
+            /* ===================================================== */}
+            <div style={styles.card}>
+
+              <h2>Orders Overview</h2>
+
+              <ResponsiveContainer
+                width="100%"
+                height={300}
+              >
+
+                <PieChart>
+
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    outerRadius={100}
+                    label
+                  >
+
+                    {pieData.map(
+                      (entry, index) => (
+
+                        <Cell
+                          key={index}
+                          fill={
+                            COLORS[index]
+                          }
+                        />
+
+                      )
+                    )}
+
+                  </Pie>
+
+                  <Tooltip />
+
+                </PieChart>
+
+              </ResponsiveContainer>
+
+            </div>
 
               </div>
 
@@ -697,6 +830,10 @@ function AdminDashboard() {
                   ❌ Out Of Stock:
                   {outOfStock}
                 </p>
+                 <p>
+                  ❌ Cancelled Orders:
+                  {cancelledOrders}
+                 </p>
 
               </div>
 
@@ -974,6 +1111,97 @@ function AdminDashboard() {
 
     )}
 
+
+      {/* ===================================================== */
+/* 🔥 RECENT ORDERS TABLE */
+/* ===================================================== */}
+<div style={styles.card}>
+
+  <h2>
+    Recent Orders
+  </h2>
+
+  <table style={styles.table}>
+
+    <thead>
+
+      <tr>
+
+        <th style={styles.th}>
+          Product
+        </th>
+
+        <th style={styles.th}>
+          Customer
+        </th>
+
+        <th style={styles.th}>
+          Amount
+        </th>
+
+        <th style={styles.th}>
+          Status
+        </th>
+
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      {orders.map((order) => (
+
+        <tr key={order.id}>
+
+          <td style={styles.td}>
+            {order.product_name}
+          </td>
+
+          <td style={styles.td}>
+            {order.full_name}
+          </td>
+
+          <td style={styles.td}>
+            ₹ {order.amount}
+          </td>
+
+          <td style={styles.td}>
+
+            <span
+              style={{
+
+                color:
+
+                  order.status ===
+                  "Delivered"
+
+                    ? "green"
+
+                    : order.status ===
+                      "Cancelled"
+
+                    ? "red"
+
+                    : "#f59e0b"
+
+              }}
+            >
+
+              {order.status}
+
+            </span>
+
+          </td>
+
+        </tr>
+
+      ))}
+
+    </tbody>
+
+  </table>
+
+</div>
   </>
 
 )}
@@ -1284,6 +1512,89 @@ textarea: {
   marginBottom: "15px",
   borderRadius: "10px",
   border: "1px solid #ddd"
+},
+// =====================================================
+// 🔥 ANALYTICS CONTAINER
+// =====================================================
+analyticsContainer: {
+  padding: "20px"
+},
+
+
+
+// =====================================================
+// 🔥 TOP CARDS
+// =====================================================
+analyticsCards: {
+  display: "grid",
+  gridTemplateColumns:
+    "repeat(auto-fit,minmax(220px,1fr))",
+  gap: "20px",
+  marginBottom: "30px"
+},
+
+
+
+// =====================================================
+// 🔥 SINGLE CARD
+// =====================================================
+analyticsCard: {
+  background: "#fff",
+  padding: "25px",
+  borderRadius: "15px",
+  textAlign: "center",
+  boxShadow:
+    "0 5px 15px rgba(0,0,0,0.1)"
+},
+
+
+
+// =====================================================
+// 🔥 CHARTS CONTAINER
+// =====================================================
+chartsContainer: {
+  display: "grid",
+  gridTemplateColumns:
+    "repeat(auto-fit,minmax(400px,1fr))",
+  gap: "25px",
+  marginBottom: "30px"
+},
+
+
+
+// =====================================================
+// 🔥 CHART BOX
+// =====================================================
+chartBox: {
+  background: "#fff",
+  padding: "20px",
+  borderRadius: "15px",
+  boxShadow:
+    "0 5px 15px rgba(0,0,0,0.1)"
+},
+
+
+
+// =====================================================
+// 🔥 ORDERS TABLE
+// =====================================================
+ordersTable: {
+  background: "#fff",
+  padding: "20px",
+  borderRadius: "15px",
+  boxShadow:
+    "0 5px 15px rgba(0,0,0,0.1)"
+},
+
+
+
+// =====================================================
+// 🔥 TABLE
+// =====================================================
+table: {
+  width: "100%",
+  borderCollapse: "collapse",
+  marginTop: "20px"
 },
 
 };

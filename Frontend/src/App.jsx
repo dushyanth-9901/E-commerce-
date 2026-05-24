@@ -5,8 +5,8 @@ import {
 } from "react-router-dom";
 
 import {
-  useState,
-  useEffect
+  useEffect,
+  useState
 } from "react";
 
 import Auth from "./pages/Auth";
@@ -20,28 +20,15 @@ import Success from "./pages/Success";
 export default function App() {
 
   // =====================================================
-  // 🔥 CART STATE
+  // 🔥 LOAD CART FROM LOCALSTORAGE
   // =====================================================
-  const [cart, setCart] =
-    useState([]);
+ const [cart, setCart] = useState(
 
-  // =====================================================
-  // 🔥 LOAD CART FROM STORAGE
-  // =====================================================
-  useEffect(() => {
+  JSON.parse(
+    localStorage.getItem("cart")
+  ) || []
 
-    const savedCart =
-      localStorage.getItem("cart");
-
-    if (savedCart) {
-
-      setCart(
-        JSON.parse(savedCart)
-      );
-
-    }
-
-  }, []);
+);
 
   // =====================================================
   // 🔥 SAVE CART
@@ -107,11 +94,6 @@ export default function App() {
         />
 
         <Route
-          path="/success"
-          element={<Success />}
-        />
-
-        <Route
           path="/admin"
           element={<AdminLogin />}
         />
@@ -119,6 +101,11 @@ export default function App() {
         <Route
           path="/admin-dashboard"
           element={<AdminDashboard />}
+        />
+
+        <Route
+          path="/success"
+          element={<Success />}
         />
 
       </Routes>
