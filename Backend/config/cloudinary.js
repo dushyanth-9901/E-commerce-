@@ -1,4 +1,7 @@
-import { v2 as cloudinary } from "cloudinary";
+const cloudinary =
+  require("cloudinary").v2;
+
+
 
 cloudinary.config({
 
@@ -13,4 +16,6 @@ cloudinary.config({
 
 });
 
-export default cloudinary;
+
+
+module.exports = cloudinary;

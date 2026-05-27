@@ -41,7 +41,6 @@ function ProductDetails({ cart, setCart }) {
     useState("");
 
 
-
   // =====================================================
   // 🔥 FETCH PRODUCT
   // =====================================================
@@ -639,13 +638,18 @@ function ProductDetails({ cart, setCart }) {
 
 
 
-          <button
+      <button
             style={styles.buyBtn}
-            onClick={buyNow}
-          >
-            Buy Now
-          </button>
+            onClick={() => {
 
+              addToCart();
+
+              navigate("/cart");
+
+            }}
+      >
+            Buy Now
+      </button>
         </div>
 
       </div>

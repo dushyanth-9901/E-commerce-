@@ -49,7 +49,8 @@ router.post("/save", (req, res) => {
       pincode,
       address_line,
 
-      status
+     order_status
+
 
     )
 
@@ -63,25 +64,28 @@ router.post("/save", (req, res) => {
 
     sql,
 
-    [
+   [
 
-      user_email,
-      product_name,
-      amount,
-      payment_id,
+  user_email,
+  product_name,
+  amount,
+  payment_id,
 
-      full_name,
-      phone,
-      state,
-      district,
-      taluk,
-      village,
-      pincode,
-      address_line,
+  payment_method,
+  payment_status,
 
-      "Pending"
+  full_name,
+  phone,
+  state,
+  district,
+  taluk,
+  village,
+  pincode,
+  address_line,
 
-    ],
+  "Processing"
+
+],
 
     (err, result) => {
 
@@ -132,39 +136,39 @@ router.get("/", (req, res) => {
 
 
 // =====================================================
-// ✅ UPDATE ORDER STATUS
+// 🔥 UPDATE ORDER STATUS
 // =====================================================
-router.put("/:id", (req, res) => {
+router.put("/:id", async (req, res) => {
 
-  const id = req.params.id;
+  try {
 
-  const { status } = req.body;
+   const { order_status } = req.body;
 
-  const sql =
-    "UPDATE orders SET status=? WHERE id=?";
+    await db.query(
 
-  db.query(
+      `
+      UPDATE orders
+      SET order_status = ?
+      WHERE id = ?
+      `,
 
-    sql,
+      [order_status, req.params.id]
 
-    [status, id],
+    );
 
-    (err, result) => {
+    res.json({
+      success: true
+    });
 
-      if (err) {
+  } catch (error) {
 
-        return res.status(500).json(err);
+    console.log(error);
 
-      }
+    res.status(500).json({
+      error: error.message
+    });
 
-      res.json({
-        message:
-          "Order Updated ✅"
-      });
-
-    }
-
-  );
+  }
 
 });
 

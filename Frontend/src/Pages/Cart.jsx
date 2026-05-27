@@ -30,8 +30,26 @@ function Cart({ cart, setCart }) {
       addressLine: ""
 
     });
+const [showAddressForm, setShowAddressForm] =
+  useState(false);
 
+const [selectedProduct, setSelectedProduct] =
+  useState(null);
+    useState(() => {
 
+  const savedAddress = JSON.parse(
+
+    localStorage.getItem("deliveryAddress")
+
+  );
+
+  if (savedAddress) {
+
+    setAddress(savedAddress);
+
+  }
+
+});
 
   // ============================================
   // ❌ REMOVE PRODUCT
@@ -59,27 +77,72 @@ function Cart({ cart, setCart }) {
   // 💳 HANDLE PAYMENT
   // ============================================
   const handlePayment = async (
-    product
-  ) => {
+  product
+) => {
 
-    try {
+  try {
 
-      // ============================================
-      // 🔥 CREATE ORDER
-      // ============================================
-      const res = await axios.post(
+    // ============================================
+    // 🔥 ADDRESS VALIDATION
+    // ============================================
+    if (
 
-        "http://localhost:5000/api/payment/create-order",
+      !address.fullName ||
+      !address.phone ||
+      !address.state ||
+      !address.district ||
+      !address.taluk ||
+      !address.village ||
+      !address.pincode ||
+      !address.addressLine
 
-        {
-          amount:
-            product.price *
-            product.quantity
-        }
+    ) {
 
+      alert(
+        "Please Fill Delivery Address"
       );
 
+      return;
 
+    }
+
+    // ============================================
+    // 🔥 CREATE ORDER
+    // ============================================
+    const res = await axios.post(
+
+      "http://localhost:5000/api/payment/create-order",
+
+      {
+        amount:
+          product.price *
+          product.quantity
+      }
+
+    );
+        // ============================================
+          // 🔥 ADDRESS VALIDATION
+          // ============================================
+          if (
+
+            !address.fullName ||
+            !address.phone ||
+            !address.state ||
+            !address.district ||
+            !address.taluk ||
+            !address.village ||
+            !address.pincode ||
+            !address.addressLine
+
+          ) {
+
+            alert(
+              "Please Fill Delivery Address"
+            );
+
+            return;
+
+          }
 
       // ============================================
       // 🔥 RAZORPAY
@@ -259,7 +322,54 @@ function Cart({ cart, setCart }) {
     }
 
   };
+    // ============================================
+// 🔥 SAVE ADDRESS
+// ============================================
+const saveAddressAndContinue = () => {
 
+  if (
+
+    !address.fullName ||
+    !address.phone ||
+    !address.state ||
+    !address.district ||
+    !address.taluk ||
+    !address.village ||
+    !address.pincode ||
+    !address.addressLine
+
+  ) {
+
+    alert(
+      "Please Fill Delivery Address"
+    );
+
+    return;
+
+  }
+
+  // ============================================
+  // 🔥 SAVE LOCAL STORAGE
+  // ============================================
+  localStorage.setItem(
+
+    "deliveryAddress",
+
+    JSON.stringify(address)
+
+  );
+
+  // ============================================
+  // 🔥 CLOSE FORM
+  // ============================================
+  setShowAddressForm(false);
+
+  // ============================================
+  // 🔥 CONTINUE PAYMENT
+  // ============================================
+  handlePayment(selectedProduct);
+
+};
 
 
   return (
@@ -322,14 +432,35 @@ function Cart({ cart, setCart }) {
 
               <button
 
-                style={styles.buyBtn}
+              onClick={() => {
 
-                onClick={() =>
-                  handlePayment(
-                    product
-                  )
+  // ============================================
+  // 🔥 ADDRESS EXIST
+  // ============================================
+                if (
+
+                  address.fullName &&
+                  address.phone &&
+                  address.state
+
+                ) {
+
+                  handlePayment(product);
+
                 }
 
+                // ============================================
+                // 🔥 NEW USER
+                // ============================================
+                else {
+
+                  setSelectedProduct(product);
+
+                  setShowAddressForm(true);
+
+                }
+
+              }}
               >
                 Buy Now
               </button>
@@ -358,138 +489,174 @@ function Cart({ cart, setCart }) {
 
       )}
 
-
-
       {/* ============================================
-          🔥 ADDRESS FORM
-      ============================================ */}
-      <div style={styles.form}>
+    🔥 ADDRESS POPUP
+============================================ */}
+{showAddressForm && (
+
+  <div style={styles.popupOverlay}>
+
+    <div style={styles.popupBox}>
+
+      <div style={styles.popupHeader}>
 
         <h2>
           Delivery Address
         </h2>
 
-        <input
-          placeholder="Full Name"
-          style={styles.input}
-          onChange={(e) =>
-            setAddress({
+        <button
 
-              ...address,
+          style={styles.closeBtn}
 
-              fullName:
-                e.target.value
-
-            })
+          onClick={() =>
+            setShowAddressForm(false)
           }
-        />
 
-        <input
-          placeholder="Phone"
-          style={styles.input}
-          onChange={(e) =>
-            setAddress({
-
-              ...address,
-
-              phone:
-                e.target.value
-
-            })
-          }
-        />
-
-        <input
-          placeholder="State"
-          style={styles.input}
-          onChange={(e) =>
-            setAddress({
-
-              ...address,
-
-              state:
-                e.target.value
-
-            })
-          }
-        />
-
-        <input
-          placeholder="District"
-          style={styles.input}
-          onChange={(e) =>
-            setAddress({
-
-              ...address,
-
-              district:
-                e.target.value
-
-            })
-          }
-        />
-
-        <input
-          placeholder="Taluk"
-          style={styles.input}
-          onChange={(e) =>
-            setAddress({
-
-              ...address,
-
-              taluk:
-                e.target.value
-
-            })
-          }
-        />
-
-        <input
-          placeholder="Village"
-          style={styles.input}
-          onChange={(e) =>
-            setAddress({
-
-              ...address,
-
-              village:
-                e.target.value
-
-            })
-          }
-        />
-
-        <input
-          placeholder="Pincode"
-          style={styles.input}
-          onChange={(e) =>
-            setAddress({
-
-              ...address,
-
-              pincode:
-                e.target.value
-
-            })
-          }
-        />
-
-        <textarea
-          placeholder="Address"
-          style={styles.textarea}
-          onChange={(e) =>
-            setAddress({
-
-              ...address,
-
-              addressLine:
-                e.target.value
-
-            })
-          }
-        />
+        >
+          ✕
+        </button>
 
       </div>
+
+      <input
+        placeholder="Full Name"
+        style={styles.input}
+        onChange={(e) =>
+          setAddress({
+
+            ...address,
+
+            fullName:
+              e.target.value
+
+          })
+        }
+      />
+
+      <input
+        placeholder="Phone Number"
+        style={styles.input}
+        onChange={(e) =>
+          setAddress({
+
+            ...address,
+
+            phone:
+              e.target.value
+
+          })
+        }
+      />
+
+      <input
+        placeholder="State"
+        style={styles.input}
+        onChange={(e) =>
+          setAddress({
+
+            ...address,
+
+            state:
+              e.target.value
+
+          })
+        }
+      />
+
+      <input
+        placeholder="District"
+        style={styles.input}
+        onChange={(e) =>
+          setAddress({
+
+            ...address,
+
+            district:
+              e.target.value
+
+          })
+        }
+      />
+
+      <input
+        placeholder="Taluk"
+        style={styles.input}
+        onChange={(e) =>
+          setAddress({
+
+            ...address,
+
+            taluk:
+              e.target.value
+
+          })
+        }
+      />
+
+      <input
+        placeholder="Village"
+        style={styles.input}
+        onChange={(e) =>
+          setAddress({
+
+            ...address,
+
+            village:
+              e.target.value
+
+          })
+        }
+      />
+
+      <input
+        placeholder="Pincode"
+        style={styles.input}
+        onChange={(e) =>
+          setAddress({
+
+            ...address,
+
+            pincode:
+              e.target.value
+
+          })
+        }
+      />
+
+      <textarea
+        placeholder="Full Address"
+        style={styles.textarea}
+        onChange={(e) =>
+          setAddress({
+
+            ...address,
+
+            addressLine:
+              e.target.value
+
+          })
+        }
+      />
+
+      <button
+
+        style={styles.saveBtn}
+
+        onClick={
+          saveAddressAndContinue
+        }
+
+      >
+        Save & Continue
+      </button>
+
+    </div>
+
+  </div>
+
+)}
+
+
 
     </div>
 
@@ -572,7 +739,52 @@ const styles = {
     borderRadius: "8px",
     border: "1px solid #ccc",
     minHeight: "120px"
-  }
+  },
+  popupOverlay: {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  background:
+    "rgba(0,0,0,0.5)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 999
+},
+
+popupBox: {
+  width: "400px",
+  background: "#fff",
+  padding: "25px",
+  borderRadius: "15px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "15px"
+},
+
+popupHeader: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center"
+},
+
+closeBtn: {
+  border: "none",
+  background: "none",
+  fontSize: "20px",
+  cursor: "pointer"
+},
+
+saveBtn: {
+  padding: "12px",
+  border: "none",
+  background: "#111",
+  color: "#fff",
+  borderRadius: "8px",
+  cursor: "pointer"
+},
 
 };
 

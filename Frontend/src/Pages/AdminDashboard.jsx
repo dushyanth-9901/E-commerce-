@@ -1,24 +1,17 @@
+
 // 📁 src/pages/AdminDashboard.jsx
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line
-} from "recharts";
+import { useState, useEffect } from "react";
 
 import { useNavigate } from "react-router-dom";
 
-import { useEffect, useState } from "react";
-
 import axios from "axios";
+
+import Sidebar from "../components/admin/Sidebar";
+import DashboardHome from "../components/admin/DashboardHome";
+import ProductsPage from "../components/admin/ProductsPage";
+import OrdersPage from "../components/admin/OrdersPage";
+import UsersPage from "../components/admin/UsersPage";
 
 function AdminDashboard() {
 
@@ -28,11 +21,14 @@ function AdminDashboard() {
   const navigate = useNavigate();
 
   // =====================================================
-  // 🔥 STATES
+  // 🔥 ACTIVE PAGE
   // =====================================================
   const [active, setActive] =
     useState("Dashboard");
 
+  // =====================================================
+  // 🔥 MAIN STATES
+  // =====================================================
   const [products, setProducts] =
     useState([]);
 
@@ -45,21 +41,33 @@ function AdminDashboard() {
   const [loading, setLoading] =
     useState(true);
 
+  // =====================================================
+  // 🔥 PRODUCTS STATES
+  // =====================================================
   const [search, setSearch] =
     useState("");
 
   const [showProducts, setShowProducts] =
-  useState(false);
-  // =====================================================
-  // 🔥 PRODUCT FORM
-  // =====================================================
- const [form, setForm] = useState({
-  name: "",
-  price: "",
-  stock: "",
-  image: "",
-  images: [""]
-});
+    useState(false);
+
+  const [form, setForm] =
+    useState({
+      name: "",
+      price: "",
+      stock: "",
+      image: "",
+      image2: "",
+      image3: "",
+      description: ""
+    });
+  const [categoryFilter, setCategoryFilter] =
+      useState("All");
+
+  const [lowStockOnly, setLowStockOnly] =
+      useState(false);
+
+  const [maxPrice, setMaxPrice] =
+      useState("");
 
   // =====================================================
   // 🔥 EDIT STATES
@@ -67,74 +75,81 @@ function AdminDashboard() {
   const [editId, setEditId] =
     useState(null);
 
-  const [editForm, setEditForm] =
-    useState({
-      name: "",
-      price: "",
-      stock: "",
-      image: ""
-    });
+ 
+ const [editForm, setEditForm] =
+  useState({
+    name: "",
+    price: "",
+    stock: "",
+    image: "",
+    image2: "",
+    image3: "",
+    description: ""
+  });
 
+const [orderFilter, setOrderFilter] =
+  useState("All");
   // =====================================================
   // 🔐 ADMIN PROTECTION
   // =====================================================
   useEffect(() => {
 
-    const isAdmin =
-      localStorage.getItem("isAdmin");
+  const isAdmin =
+    localStorage.getItem("isAdmin");
 
-    if (!isAdmin) {
-      navigate("/admin");
-    }
+  if (!isAdmin) {
 
-    fetchData();
+    navigate("/admin");
 
-  }, []);
+    return;
+
+  }
+
+  fetchData();
+
+}, [navigate]);
 
   // =====================================================
   // 🔥 FETCH DATA
   // =====================================================
   const fetchData = async () => {
 
-    try {
+  try {
 
-      setLoading(true);
+    setLoading(true);
 
-      // PRODUCTS
-      const productsRes =
-        await axios.get(
-          "http://localhost:5000/api/products"
-        );
+    const productsRes =
+      await axios.get(
+        "http://localhost:5000/api/products"
+      );
 
-      // USERS
-      const usersRes =
-        await axios.get(
-          "http://localhost:5000/api/users"
-        );
+    const usersRes =
+      await axios.get(
+        "http://localhost:5000/api/users"
+      );
 
-      // ORDERS
-      const ordersRes =
-        await axios.get(
-          "http://localhost:5000/api/orders"
-        );
+    const ordersRes =
+      await axios.get(
+        "http://localhost:5000/api/orders"
+      );
 
-      setProducts(productsRes.data);
+    setProducts(productsRes.data);
 
-      setUsers(usersRes.data);
+    setUsers(usersRes.data);
 
-      setOrders(ordersRes.data);
+    setOrders(ordersRes.data);
 
-      setLoading(false);
+  } catch (error) {
 
-    } catch (error) {
+    console.log(error);
 
-      console.log(error);
+  } finally {
 
-      setLoading(false);
+    setLoading(false);
 
-    }
+  }
 
-  };
+};
 
   // =====================================================
   // 🔥 ADD PRODUCT
@@ -160,10 +175,14 @@ function AdminDashboard() {
           price: Number(form.price),
           stock: Number(form.stock),
           image: form.image,
-          images: JSON.stringify(form.images),
-          description: "New Product"
+          images: JSON.stringify([
+              form.image2,
+              form.image3
+
+          ]),
+          description: form.description
         }
-          );
+      );
 
       fetchData();
 
@@ -171,7 +190,10 @@ function AdminDashboard() {
         name: "",
         price: "",
         stock: "",
-        image: ""
+        image: "",
+        image2: "",
+        image3: "",
+        description: ""
       });
 
       alert("✅ Product Added");
@@ -216,318 +238,292 @@ function AdminDashboard() {
   // =====================================================
   const editProduct = (product) => {
 
-    setEditId(product.id);
+          setEditId(product.id);
 
-    setEditForm({
-      name: product.name,
-      price: product.price,
-      stock: product.stock,
-      image: product.image
-    });
+          const extraImages = JSON.parse(
+            product.images || "[]"
+          );
 
-  };
+          setEditForm({
+            name: product.name,
+            price: product.price,
+            stock: product.stock,
+            image: product.image,
+
+            image2: extraImages[0] || "",
+
+            image3: extraImages[1] || "",
+
+            description:
+              product.description || ""
+          });
+
+};
 
   // =====================================================
   // 🔥 UPDATE PRODUCT
   // =====================================================
   const updateProduct = async () => {
 
-    try {
+  try {
 
-      await axios.put(
-        `http://localhost:5000/api/products/${editId}`,
-        {
-          name: editForm.name,
-          price: Number(editForm.price),
-          stock: Number(editForm.stock),
-          image: editForm.image
-        }
-      );
+    await axios.put(
+      `http://localhost:5000/api/products/${editId}`,
+      {
+        name: editForm.name,
 
-      fetchData();
+        price: Number(editForm.price),
 
-      setEditId(null);
+        stock: Number(editForm.stock),
 
-      alert("✅ Product Updated");
+        image: editForm.image,
 
-    } catch (error) {
+        images: JSON.stringify([
+          editForm.image2,
+          editForm.image3
+        ]),
 
-      console.log(error);
-
-      alert("❌ Update Failed");
-
-    }
-
-  };
-
-  // =====================================================
-  // 🔥 DASHBOARD STATS
-  // =====================================================
-
-  const totalProducts =
-    products.length;
-
-  const totalUsers =
-    users.length;
-
-  const totalOrders =
-    orders.length;
-
-  const totalRevenue =
-    orders.reduce(
-      (acc, item) =>
-        acc + Number(item.amount || 0),
-      0
+        description:
+          editForm.description
+      }
     );
 
-  const lowStock =
-    products.filter(
-      (item) => Number(item.stock) < 5
-    ).length;
+    fetchData();
 
-  // =====================================================
-  // 🔥 TODAY USERS
-  // =====================================================
-  const todayUsers =
-    users.filter((user) => {
+    setEditId(null);
 
-      if (!user.created_at)
-        return false;
+    alert("✅ Product Updated");
 
-      const today =
-        new Date().toDateString();
+  } catch (error) {
 
-      return (
-        new Date(user.created_at)
-          .toDateString() === today
-      );
+    console.log(error);
 
-    }).length;
+    alert("❌ Update Failed");
 
-  // =====================================================
-  // 🔥 YESTERDAY USERS
-  // =====================================================
-  const yesterdayUsers =
-    users.filter((user) => {
-
-      if (!user.created_at)
-        return false;
-
-      const yesterday =
-        new Date();
-
-      yesterday.setDate(
-        yesterday.getDate() - 1
-      );
-
-      return (
-        new Date(user.created_at)
-          .toDateString() ===
-        yesterday.toDateString()
-      );
-
-    }).length;
-
-  // =====================================================
-  // 🔥 WEEK USERS
-  // =====================================================
-  const weekUsers =
-    users.filter((user) => {
-
-      if (!user.created_at)
-        return false;
-
-      const now =
-        new Date();
-
-      const userDate =
-        new Date(user.created_at);
-
-      const diff =
-        now - userDate;
-
-      const days =
-        diff / (1000 * 60 * 60 * 24);
-
-      return days <= 7;
-
-    }).length;
-
-  // =====================================================
-  // 🔥 ORDER ANALYTICS
-  // =====================================================
-  const deliveredOrders =
-    orders.filter(
-      (item) =>
-        item.status === "Delivered"
-    ).length;
-
-  const pendingOrders =
-    orders.filter(
-      (item) =>
-        item.status === "Pending"
-    ).length;
-
-  // =====================================================
-  // 🔥 CANCELLED ORDERS
-  // =====================================================
-    const cancelledOrders =
-      orders.filter(
-        (item) =>
-          item.status === "Cancelled"
-      ).length;
-
-  // =====================================================
-  // 🔥 OUT OF STOCK
-  // =====================================================
-  const outOfStock =
-    products.filter(
-      (item) =>
-        Number(item.stock) === 0
-    ).length;
-
-  // =====================================================
-  // 🔥 SEARCH FILTER
-  // =====================================================
-  const filteredProducts =
-    products.filter((item) =>
-      item.name
-        .toLowerCase()
-        .includes(
-          search.toLowerCase()
-        )
-    );
-
-  // =====================================================
-  // 🔥 CHART DATA
-  // =====================================================
-  const salesData = [
-    { month: "Jan", sales: 4000 },
-    { month: "Feb", sales: 3000 },
-    { month: "Mar", sales: 5000 },
-    { month: "Apr", sales: 7000 },
-    { month: "May", sales: 9000 }
-  ];
-
-  const stockData = [
-    {
-      name: "In Stock",
-      value: products.filter(
-        (item) => item.stock > 5
-      ).length
-    },
-    {
-      name: "Low Stock",
-      value: products.filter(
-        (item) => item.stock <= 5
-      ).length
-    }
-  ];
-
-// =====================================================
-// 🔥 ORDER ANALYTICS DATA
-// =====================================================
-
-   const orderStats = [
-
-  {
-    name: "Pending",
-    value: pendingOrders
-  },
-
-  {
-    name: "Delivered",
-    value: deliveredOrders
-  },
-
-  {
-    name: "Cancelled",
-    value: cancelledOrders
   }
 
-];
+};
+  // =====================================================
+  // 🔥 FILTER PRODUCTS
+  // =====================================================
+  const filteredProducts = products.filter(
+          (item) => {
 
-// =====================================================
-// 🔥 PIE CHART DATA
-// =====================================================
-const pieData = [
+            // 🔍 SEARCH
+            const matchesSearch =
+              item.name
+                .toLowerCase()
+                .includes(
+                  search.toLowerCase()
+                );
 
-  {
-    name: "Pending",
-    value: pendingOrders
-  },
+            // 📂 CATEGORY
+            const matchesCategory =
 
-  {
-    name: "Delivered",
-    value: deliveredOrders
-  },
+              categoryFilter === "All"
 
-  {
-    name: "Cancelled",
-    value: cancelledOrders
-  }
+                ? true
 
-  ];
+                : item.category ===
+                  categoryFilter;
 
-  const COLORS = [
-  "#f59e0b",
-  "#10b981",
-  "#ef4444"
-];
+            // ⚠️ LOW STOCK
+            const matchesLowStock =
+
+              lowStockOnly
+
+                ? item.stock < 5
+
+                : true;
+
+            // 💰 PRICE FILTER
+            const matchesPrice =
+
+              maxPrice
+
+                ? Number(item.price)
+                    <= Number(maxPrice)
+
+                : true;
+
+            return (
+
+              matchesSearch &&
+              matchesCategory &&
+              matchesLowStock &&
+              matchesPrice
+
+            );
+
+          }
+        );
 
   // =====================================================
   // 🔥 LOADING
   // =====================================================
   if (loading) {
+
     return (
-      <h1 style={{
-        textAlign: "center",
-        marginTop: "100px"
-      }}>
+
+      <h1
+        style={{
+          textAlign: "center",
+          marginTop: "100px"
+        }}
+      >
         Loading Dashboard...
       </h1>
+
     );
+
+  }
+  // =====================================================
+// 🔥 TOTAL REVENUE
+// =====================================================
+
+const totalRevenue =
+
+  orders.reduce(
+
+    (acc, item) =>
+
+      acc + Number(item.amount || 0),
+
+    0
+
+  );
+
+// =====================================================
+// 🔥 TODAY SALES
+// =====================================================
+
+const todaySales =
+
+  orders.filter((item) => {
+
+    const today =
+      new Date().toDateString();
+
+    return (
+
+      new Date(item.created_at)
+        .toDateString() === today
+
+    );
+
+  }).reduce(
+
+    (acc, item) =>
+
+      acc + Number(item.amount || 0),
+
+    0
+
+  );
+
+// =====================================================
+// 🔥 WEEK SALES
+// =====================================================
+
+const weekSales =
+
+  orders.filter((item) => {
+
+    const now = new Date();
+
+    const orderDate =
+      new Date(item.created_at);
+
+    const diff =
+      now - orderDate;
+
+    const days =
+      diff / (1000 * 60 * 60 * 24);
+
+    return days <= 7;
+
+  }).reduce(
+
+    (acc, item) =>
+
+      acc + Number(item.amount || 0),
+
+    0
+
+  );
+
+// =====================================================
+// 🔥 MONTH SALES
+// =====================================================
+
+const monthSales =
+
+  orders.filter((item) => {
+
+    const now = new Date();
+
+    const orderDate =
+      new Date(item.created_at);
+
+    return (
+
+      now.getMonth() ===
+      orderDate.getMonth()
+
+    );
+
+  }).reduce(
+
+    (acc, item) =>
+
+      acc + Number(item.amount || 0),
+
+    0
+
+  );
+  const updateOrderStatus = async (
+
+  id,
+  status
+
+) => {
+
+  try {
+
+    await axios.put(
+
+      `http://localhost:5000/api/orders/${id}`,
+
+      { status }
+
+    );
+
+    fetchData();
+
+    alert(`Order ${status} ✅`);
+
+  } catch (error) {
+
+    console.log(error);
+
+    alert("Update Failed ❌");
+
   }
 
+};
+
+  // =====================================================
+  // 🔥 RETURN
+  // =====================================================
   return (
 
     <div style={styles.container}>
 
       {/* SIDEBAR */}
-      <div style={styles.sidebar}>
-
-        <h2 style={styles.logo}>
-          Admin Panel
-        </h2>
-
-        <ul style={styles.menu}>
-
-          {[
-            "Dashboard",
-            "Products",
-            "Orders",
-            "Users"
-          ].map((item) => (
-
-            <li
-              key={item}
-              onClick={() =>
-                setActive(item)
-              }
-              style={
-                active === item
-                  ? styles.activeMenu
-                  : styles.menuItem
-              }
-            >
-              {item}
-            </li>
-
-          ))}
-
-        </ul>
-
-      </div>
+      <Sidebar
+        active={active}
+        setActive={setActive}
+      />
 
       {/* MAIN */}
       <div style={styles.main}>
@@ -557,654 +553,85 @@ const pieData = [
         {/* DASHBOARD */}
         {active === "Dashboard" && (
 
-          <>
+       <DashboardHome
+        products={products}
+        users={users}
+        orders={orders}
+        loading={loading}
+      />
+        )}
 
-            {/* STATS */}
-            <div style={styles.statsGrid}>
+        {/* PRODUCTS */}
+        {active === "Products" && (
 
-              <div style={styles.card}>
-                <h2>{totalProducts}</h2>
-                <p>Total Products</p>
-              </div>
+          <ProductsPage
 
-              <div style={styles.card}>
-                <h2>{totalUsers}</h2>
-                <p>Total Users</p>
-              </div>
+            styles={styles}
 
-              <div style={styles.card}>
-                <h2>{totalOrders}</h2>
-                <p>Total Orders</p>
-              </div>
+            form={form}
+            setForm={setForm}
 
-              <div style={styles.card}>
-                <h2>
-                  ₹ {totalRevenue}
-                </h2>
-                <p>Total Revenue</p>
-              </div>
+            addProduct={addProduct}
 
-            </div>
+            search={search}
+            setSearch={setSearch}
 
-            {/* CHARTS */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fit,minmax(350px,1fr))",
-                gap: "20px",
-                marginTop: "30px"
-              }}
-            >
+            filteredProducts={filteredProducts}
 
-              {/* SALES */}
-              <div style={styles.card}>
+            showProducts={showProducts}
+            setShowProducts={setShowProducts}
 
-                <h2>Monthly Sales</h2>
+            editProduct={editProduct}
+            deleteProduct={deleteProduct}
+            
+            categoryFilter={categoryFilter}
+            setCategoryFilter={setCategoryFilter}
 
-                <ResponsiveContainer
-                  width="100%"
-                  height={300}
-                >
+            lowStockOnly={lowStockOnly}
+            setLowStockOnly={setLowStockOnly}
 
-                  <BarChart data={salesData}>
+            maxPrice={maxPrice}
+            setMaxPrice={setMaxPrice}
 
-                    <XAxis dataKey="month" />
-
-                    <YAxis />
-
-                    <Tooltip />
-
-                    <Bar
-                      dataKey="sales"
-                      fill="#6c63ff"
-                    />
-
-                  </BarChart>
-
-                </ResponsiveContainer>
-
-              </div>
-
-              {/* REVENUE */}
-              <div style={styles.card}>
-
-                <h2>Revenue Growth</h2>
-
-                <ResponsiveContainer
-                  width="100%"
-                  height={300}
-                >
-
-                  <LineChart data={salesData}>
-
-                    <XAxis dataKey="month" />
-
-                    <YAxis />
-
-                    <Tooltip />
-
-                    <Line
-                      type="monotone"
-                      dataKey="sales"
-                      stroke="#00b894"
-                    />
-
-                  </LineChart>
-
-                </ResponsiveContainer>
-
-              </div>
-
-              {/* STOCK */}
-              <div style={styles.card}>
-
-                <h2>Stock Overview</h2>
-
-                <ResponsiveContainer
-                  width="100%"
-                  height={300}
-                >
-
-                  <PieChart>
-
-                    <Pie
-                      data={stockData}
-                      dataKey="value"
-                      outerRadius={100}
-                      label
-                    >
-
-                      {stockData.map(
-                        (entry, index) => (
-
-                          <Cell
-                            key={index}
-                            fill={
-                              COLORS[index]
-                            }
-                          />
-
-                        )
-                      )}
-
-                    </Pie>
-
-                    <Tooltip />
-
-                  </PieChart>
-
-                            </ResponsiveContainer>
-                            {/* ===================================================== */
-            /* 🔥 ORDER ANALYTICS BAR CHART */
-            /* ===================================================== */}
-            <div style={styles.card}>
-
-              <h2>Orders Analytics</h2>
-
-              <ResponsiveContainer
-                width="100%"
-                height={300}
-              >
-
-                <BarChart data={orderStats}>
-
-                  <XAxis dataKey="name" />
-
-                  <YAxis />
-
-                  <Tooltip />
-
-                  <Bar
-                    dataKey="value"
-                    fill="#6c63ff"
-                  />
-
-                </BarChart>
-
-              </ResponsiveContainer>
-
-            </div>
-
-
-
-
-
-            {/* ===================================================== */
-            /* 🔥 ORDER STATUS PIE CHART */
-            /* ===================================================== */}
-            <div style={styles.card}>
-
-              <h2>Orders Overview</h2>
-
-              <ResponsiveContainer
-                width="100%"
-                height={300}
-              >
-
-                <PieChart>
-
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    outerRadius={100}
-                    label
-                  >
-
-                    {pieData.map(
-                      (entry, index) => (
-
-                        <Cell
-                          key={index}
-                          fill={
-                            COLORS[index]
-                          }
-                        />
-
-                      )
-                    )}
-
-                  </Pie>
-
-                  <Tooltip />
-
-                </PieChart>
-
-              </ResponsiveContainer>
-
-            </div>
-
-              </div>
-
-              {/* QUICK INSIGHTS */}
-              <div style={styles.card}>
-
-                <h2>Quick Insights</h2>
-
-                <p>
-                  ✅ Products:
-                  {totalProducts}
-                </p>
-
-                <p>
-                  👥 Users:
-                  {totalUsers}
-                </p>
-
-                <p>
-                  🛒 Orders:
-                  {totalOrders}
-                </p>
-
-                <p>
-                  ⚠ Low Stock:
-                  {lowStock}
-                </p>
-
-                <p>
-                  🆕 Users Today:
-                  {todayUsers}
-                </p>
-
-                <p>
-                  📅 Yesterday Users:
-                  {yesterdayUsers}
-                </p>
-
-                <p>
-                  📈 New Users This Week:
-                  {weekUsers}
-                </p>
-
-                <p>
-                  ✅ Delivered Orders:
-                  {deliveredOrders}
-                </p>
-
-                <p>
-                  ⏳ Pending Orders:
-                  {pendingOrders}
-                </p>
-
-                <p>
-                  ❌ Out Of Stock:
-                  {outOfStock}
-                </p>
-                 <p>
-                  ❌ Cancelled Orders:
-                  {cancelledOrders}
-                 </p>
-
-              </div>
-
-            </div>
-
-          </>
+          />
 
         )}
 
-       {/* PRODUCTS */}
-{active === "Products" && (
+        {/* ORDERS */}
+        {active === "Orders" && (
 
-  <>
+          <OrdersPage
 
-    {/* ===================================================== */}
-    {/* 🔥 TOP HEADER */}
-    {/* ===================================================== */}
-    <div style={styles.productsTop}>
 
-      <h2>
-        Product Management 📦
-      </h2>
+            styles={styles}
 
-      <button
-        style={styles.showBtn}
-        onClick={() =>
-          setShowProducts(!showProducts)
-        }
-      >
-        {showProducts
-          ? "Hide Products"
-          : "Show Products"}
-      </button>
+            orders={orders}
 
-    </div>
+            totalRevenue={totalRevenue}
+            todaySales={todaySales}
+            weekSales={weekSales}
+            monthSales={monthSales}
 
+            orderFilter={orderFilter}
+            setOrderFilter={setOrderFilter}
 
+            updateOrderStatus={updateOrderStatus}
+          />
 
+        )}
 
+        {/* USERS */}
+        {active === "Users" && (
 
-    {/* ===================================================== */}
-    {/* 🔥 ADD PRODUCT FORM */}
-    {/* ===================================================== */}
-    <div style={styles.formBox}>
+         
+       <UsersPage
 
-      <h2>Add New Product</h2>
+        users={users}
+        styles={styles}
 
-      <input
-        type="text"
-        placeholder="Product Name"
-        style={styles.input}
-        value={form.name}
-        onChange={(e) =>
-          setForm({
-            ...form,
-            name: e.target.value
-          })
-        }
-      />
+       />
 
-      <input
-        type="number"
-        placeholder="Price"
-        style={styles.input}
-        value={form.price}
-        onChange={(e) =>
-          setForm({
-            ...form,
-            price: e.target.value
-          })
-        }
-      />
-
-      <input
-        type="number"
-        placeholder="Stock"
-        style={styles.input}
-        value={form.stock}
-        onChange={(e) =>
-          setForm({
-            ...form,
-            stock: e.target.value
-          })
-        }
-      />
-
-      <textarea
-        placeholder="Product Description"
-        style={styles.textarea}
-        value={form.description}
-        onChange={(e) =>
-          setForm({
-            ...form,
-            description: e.target.value
-          })
-        }
-      />
-
-
-
-      {/* ===================================================== */}
-      {/* 🔥 IMAGE 1 */}
-      {/* ===================================================== */}
-      <input
-        type="text"
-        placeholder="Image URL 1"
-        style={styles.input}
-        value={form.image}
-        onChange={(e) =>
-          setForm({
-            ...form,
-            image: e.target.value
-          })
-        }
-      />
-
-
-
-      {/* ===================================================== */}
-      {/* 🔥 IMAGE 2 */}
-      {/* ===================================================== */}
-      <input
-        type="text"
-        placeholder="Image URL 2"
-        style={styles.input}
-        value={form.image2 || ""}
-        onChange={(e) =>
-          setForm({
-            ...form,
-            image2: e.target.value
-          })
-        }
-      />
-
-
-
-      {/* ===================================================== */}
-      {/* 🔥 IMAGE 3 */}
-      {/* ===================================================== */}
-      <input
-        type="text"
-        placeholder="Image URL 3"
-        style={styles.input}
-        value={form.image3 || ""}
-        onChange={(e) =>
-          setForm({
-            ...form,
-            image3: e.target.value
-          })
-        }
-      />
-
-
-
-      <button
-        style={styles.addBtn}
-        onClick={addProduct}
-      >
-        Add Product
-      </button>
-
-    </div>
-
-
-
-
-
-
-    {/* ===================================================== */}
-    {/* 🔍 SEARCH */}
-    {/* ===================================================== */}
-    <input
-      type="text"
-      placeholder="Search Products..."
-      style={styles.search}
-      value={search}
-      onChange={(e) =>
-        setSearch(e.target.value)
-      }
-    />
-
-
-
-
-
-
-    {/* ===================================================== */}
-    {/* 🔥 PRODUCTS LIST */}
-    {/* ===================================================== */}
-    {showProducts && (
-
-      <div style={styles.productsGrid}>
-
-        {filteredProducts.map((item) => (
-
-          <div
-            key={item.id}
-            style={styles.productCard}
-          >
-
-            {/* IMAGE */}
-            <img
-              src={item.image}
-              alt={item.name}
-              style={styles.productImage}
-            />
-
-
-
-            {/* NAME */}
-            <h3>
-              {item.name}
-            </h3>
-
-
-
-            {/* PRICE */}
-            <p style={styles.productPrice}>
-              ₹ {item.price}
-            </p>
-
-
-
-            {/* STOCK */}
-            <p>
-              Stock:
-              {" "}
-              {item.stock}
-            </p>
-
-
-
-            {/* DESCRIPTION */}
-            <p style={styles.productDesc}>
-              {
-                item.description
-                  || "No Description"
-              }
-            </p>
-
-
-
-
-
-            {/* ===================================================== */}
-            {/* 🔥 ACTION BUTTONS */}
-            {/* ===================================================== */}
-            <div style={styles.actionBtns}>
-
-              <button
-                style={styles.editBtn}
-                onClick={() =>
-                  editProduct(item)
-                }
-              >
-                Edit
-              </button>
-
-              <button
-                style={styles.deleteBtn}
-                onClick={() =>
-                  deleteProduct(item.id)
-                }
-              >
-                Delete
-              </button>
-
-            </div>
-
-          </div>
-
-        ))}
-
-      </div>
-
-    )}
-
-
-      {/* ===================================================== */
-/* 🔥 RECENT ORDERS TABLE */
-/* ===================================================== */}
-<div style={styles.card}>
-
-  <h2>
-    Recent Orders
-  </h2>
-
-  <table style={styles.table}>
-
-    <thead>
-
-      <tr>
-
-        <th style={styles.th}>
-          Product
-        </th>
-
-        <th style={styles.th}>
-          Customer
-        </th>
-
-        <th style={styles.th}>
-          Amount
-        </th>
-
-        <th style={styles.th}>
-          Status
-        </th>
-
-      </tr>
-
-    </thead>
-
-    <tbody>
-
-      {orders.map((order) => (
-
-        <tr key={order.id}>
-
-          <td style={styles.td}>
-            {order.product_name}
-          </td>
-
-          <td style={styles.td}>
-            {order.full_name}
-          </td>
-
-          <td style={styles.td}>
-            ₹ {order.amount}
-          </td>
-
-          <td style={styles.td}>
-
-            <span
-              style={{
-
-                color:
-
-                  order.status ===
-                  "Delivered"
-
-                    ? "green"
-
-                    : order.status ===
-                      "Cancelled"
-
-                    ? "red"
-
-                    : "#f59e0b"
-
-              }}
-            >
-
-              {order.status}
-
-            </span>
-
-          </td>
-
-        </tr>
-
-      ))}
-
-    </tbody>
-
-  </table>
-
-</div>
-  </>
-
-)}
+        )}
 
       </div>
 
@@ -1225,6 +652,43 @@ const pieData = [
                 setEditForm({
                   ...editForm,
                   name: e.target.value
+                })
+              }
+            />
+            <input
+              type="text"
+              placeholder="Second Image URL"
+              style={styles.input}
+              value={editForm.image2}
+              onChange={(e) =>
+                setEditForm({
+                  ...editForm,
+                  image2: e.target.value
+                })
+              }
+            />
+
+            <input
+              type="text"
+              placeholder="Third Image URL"
+              style={styles.input}
+              value={editForm.image3}
+              onChange={(e) =>
+                setEditForm({
+                  ...editForm,
+                  image3: e.target.value
+                })
+              }
+            />
+
+            <textarea
+              placeholder="Description"
+              style={styles.input}
+              value={editForm.description}
+              onChange={(e) =>
+                setEditForm({
+                  ...editForm,
+                  description: e.target.value
                 })
               }
             />
@@ -1284,42 +748,15 @@ const pieData = [
 
 }
 
+// =====================================================
+// 🔥 STYLES
+// =====================================================
 const styles = {
 
   container: {
     display: "flex",
     minHeight: "100vh",
     background: "#f5f7fb"
-  },
-
-  sidebar: {
-    width: "250px",
-    background: "#111827",
-    color: "#fff",
-    padding: "30px"
-  },
-
-  logo: {
-    marginBottom: "40px"
-  },
-
-  menu: {
-    listStyle: "none",
-    padding: 0
-  },
-
-  menuItem: {
-    padding: "12px",
-    marginBottom: "10px",
-    cursor: "pointer"
-  },
-
-  activeMenu: {
-    padding: "12px",
-    marginBottom: "10px",
-    background: "#6c63ff",
-    borderRadius: "8px",
-    cursor: "pointer"
   },
 
   main: {
@@ -1346,81 +783,6 @@ const styles = {
     cursor: "pointer"
   },
 
-  statsGrid: {
-    display: "grid",
-    gridTemplateColumns:
-      "repeat(auto-fit,minmax(220px,1fr))",
-    gap: "20px"
-  },
-
-  card: {
-    background: "#fff",
-    padding: "25px",
-    borderRadius: "15px"
-  },
-
-  formBox: {
-    background: "#fff",
-    padding: "25px",
-    borderRadius: "15px",
-    marginBottom: "20px"
-  },
-
-  input: {
-    width: "100%",
-    padding: "12px",
-    marginBottom: "15px"
-  },
-
-  addBtn: {
-    padding: "10px 20px",
-    background: "#6c63ff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer"
-  },
-
-  tableBox: {
-    background: "#fff",
-    padding: "20px",
-    borderRadius: "15px"
-  },
-
-  table: {
-    width: "100%",
-    borderCollapse: "collapse"
-  },
-
-  th: {
-    padding: "15px",
-    background: "#f3f4f6"
-  },
-
-  td: {
-    padding: "15px",
-    borderBottom: "1px solid #eee"
-  },
-
-  editBtn: {
-    padding: "8px 12px",
-    background: "#2563eb",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    marginRight: "10px",
-    cursor: "pointer"
-  },
-
-  deleteBtn: {
-    padding: "8px 12px",
-    background: "crimson",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer"
-  },
-
   modalOverlay: {
     position: "fixed",
     top: 0,
@@ -1440,43 +802,136 @@ const styles = {
     width: "400px"
   },
 
-  search: {
+  input: {
     width: "100%",
     padding: "12px",
-    marginBottom: "20px",
-    borderRadius: "8px",
-    border: "1px solid #ddd"
+    marginBottom: "15px"
   },
-  productsTop: {
+
+  addBtn: {
+    padding: "10px 20px",
+    background: "#6c63ff",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer"
+  },
+  filterRow: {
   display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "20px"
+  gap: "20px",
+  marginBottom: "20px",
+  flexWrap: "wrap",
+  alignItems: "center"
+},
+// ============================================
+// 🔥 STATS CARDS
+// ============================================
+ordersStats: {
+  display: "grid",
+  gridTemplateColumns:
+    "repeat(auto-fit,minmax(220px,1fr))",
+  gap: "20px",
+  marginBottom: "30px"
 },
 
-showBtn: {
-  padding: "10px 20px",
+orderCard: {
+  background: "#fff",
+  padding: "25px",
+  borderRadius: "15px",
+  boxShadow:
+    "0 4px 15px rgba(0,0,0,0.08)"
+},
+
+// ============================================
+// 🔥 FILTER BUTTONS
+// ============================================
+filterBtn: {
+  padding: "10px 18px",
   border: "none",
-  borderRadius: "10px",
-  background: "#111827",
+  borderRadius: "8px",
+  cursor: "pointer",
+  background: "#e5e7eb",
+  fontWeight: "bold"
+},
+
+activeFilter: {
+  padding: "10px 18px",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  background: "#6c63ff",
   color: "#fff",
+  fontWeight: "bold"
+},
+
+// ============================================
+// 🔥 TABLE
+// ============================================
+ordersTableBox: {
+  background: "#fff",
+  padding: "20px",
+  borderRadius: "15px",
+  overflowX: "auto",
+  boxShadow:
+    "0 4px 15px rgba(0,0,0,0.08)"
+},
+
+table: {
+  width: "100%",
+  borderCollapse: "collapse"
+},
+
+th: {
+  textAlign: "left",
+  padding: "15px",
+  background: "#f3f4f6",
+  fontSize: "15px"
+},
+
+td: {
+  padding: "15px",
+  borderBottom:
+    "1px solid #eee"
+},
+
+// ============================================
+// 🔥 ACTION BUTTONS
+// ============================================
+deliverBtn: {
+  padding: "8px 15px",
+  background: "green",
+  color: "#fff",
+  border: "none",
+  borderRadius: "8px",
   cursor: "pointer"
 },
 
+cancelBtn: {
+  padding: "8px 15px",
+  background: "crimson",
+  color: "#fff",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer"
+},
+
+// ============================================
+// 🔥 PRODUCTS PAGE
+// ============================================
 productsGrid: {
   display: "grid",
   gridTemplateColumns:
-    "repeat(auto-fit,minmax(280px,1fr))",
+    "repeat(auto-fit,minmax(250px,1fr))",
   gap: "25px",
   marginTop: "20px"
 },
 
 productCard: {
   background: "#fff",
-  borderRadius: "18px",
+  borderRadius: "15px",
   padding: "20px",
   boxShadow:
-    "0 5px 20px rgba(0,0,0,0.08)"
+    "0 4px 15px rgba(0,0,0,0.08)"
 },
 
 productImage: {
@@ -1489,14 +944,14 @@ productImage: {
 
 productPrice: {
   color: "#6c63ff",
-  fontSize: "20px",
-  fontWeight: "bold"
+  fontWeight: "bold",
+  fontSize: "20px"
 },
 
 productDesc: {
   color: "#666",
-  fontSize: "14px",
-  lineHeight: "1.5"
+  marginTop: "10px",
+  lineHeight: "1.6"
 },
 
 actionBtns: {
@@ -1505,97 +960,247 @@ actionBtns: {
   marginTop: "15px"
 },
 
+editBtn: {
+  flex: 1,
+  padding: "10px",
+  background: "#6c63ff",
+  color: "#fff",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer"
+},
+
+deleteBtn: {
+  flex: 1,
+  padding: "10px",
+  background: "crimson",
+  color: "#fff",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer"
+},
+
+// ============================================
+// 🔥 SEARCH
+// ============================================
+search: {
+  width: "100%",
+  padding: "14px",
+  borderRadius: "10px",
+  border: "1px solid #ddd",
+  marginBottom: "20px"
+},
+// ============================================
+// 🔥 PRODUCTS TOP
+// ============================================
+productsTop: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "25px",
+  flexWrap: "wrap",
+  gap: "15px"
+},
+
+showBtn: {
+  padding: "12px 20px",
+  background: "#111827",
+  color: "#fff",
+  border: "none",
+  borderRadius: "10px",
+  cursor: "pointer",
+  fontWeight: "bold"
+},
+
+// ============================================
+// 🔥 FORM BOX
+// ============================================
+formBox: {
+  background: "#fff",
+  padding: "30px",
+  borderRadius: "18px",
+  marginBottom: "30px",
+  boxShadow:
+    "0 4px 15px rgba(0,0,0,0.08)"
+},
+
 textarea: {
   width: "100%",
-  minHeight: "120px",
-  padding: "12px",
-  marginBottom: "15px",
+  padding: "14px",
   borderRadius: "10px",
-  border: "1px solid #ddd"
-},
-// =====================================================
-// 🔥 ANALYTICS CONTAINER
-// =====================================================
-analyticsContainer: {
-  padding: "20px"
+  border: "1px solid #ddd",
+  marginBottom: "15px",
+  minHeight: "120px",
+  resize: "none"
 },
 
+// ============================================
+// 🔥 FILTER ROW
+// ============================================
+filterRow: {
+  display: "flex",
+  gap: "15px",
+  marginBottom: "20px",
+  flexWrap: "wrap",
+  alignItems: "center"
+},
 
+// ============================================
+// 🔥 SEARCH INPUT
+// ============================================
+search: {
+  width: "100%",
+  padding: "14px",
+  borderRadius: "12px",
+  border: "1px solid #ddd",
+  marginBottom: "20px",
+  fontSize: "15px",
+  outline: "none"
+},
 
-// =====================================================
-// 🔥 TOP CARDS
-// =====================================================
-analyticsCards: {
+// ============================================
+// 🔥 PRODUCTS GRID
+// ============================================
+productsGrid: {
   display: "grid",
   gridTemplateColumns:
-    "repeat(auto-fit,minmax(220px,1fr))",
-  gap: "20px",
-  marginBottom: "30px"
+    "repeat(auto-fit,minmax(280px,1fr))",
+  gap: "25px"
 },
 
-
-
-// =====================================================
-// 🔥 SINGLE CARD
-// =====================================================
-analyticsCard: {
+// ============================================
+// 🔥 PRODUCT CARD
+// ============================================
+productCard: {
   background: "#fff",
-  padding: "25px",
-  borderRadius: "15px",
-  textAlign: "center",
+  borderRadius: "18px",
+  overflow: "hidden",
   boxShadow:
-    "0 5px 15px rgba(0,0,0,0.1)"
+    "0 4px 15px rgba(0,0,0,0.08)",
+  transition: "0.3s"
 },
 
+// ============================================
+// 🔥 PRODUCT IMAGE
+// ============================================
+productImage: {
+  width: "100%",
+  height: "240px",
+  objectFit: "cover"
+},
 
+// ============================================
+// 🔥 PRODUCT PRICE
+// ============================================
+productPrice: {
+  color: "#6c63ff",
+  fontWeight: "bold",
+  fontSize: "22px",
+  marginTop: "10px"
+},
 
-// =====================================================
-// 🔥 CHARTS CONTAINER
-// =====================================================
-chartsContainer: {
+// ============================================
+// 🔥 PRODUCT DESCRIPTION
+// ============================================
+productDesc: {
+  color: "#666",
+  lineHeight: "1.6",
+  marginTop: "10px"
+},
+
+// ============================================
+// 🔥 ACTION BUTTONS
+// ============================================
+actionBtns: {
+  display: "flex",
+  gap: "10px",
+  marginTop: "20px"
+},
+
+editBtn: {
+  flex: 1,
+  padding: "12px",
+  background: "#6c63ff",
+  color: "#fff",
+  border: "none",
+  borderRadius: "10px",
+  cursor: "pointer",
+  fontWeight: "bold"
+},
+
+deleteBtn: {
+  flex: 1,
+  padding: "12px",
+  background: "crimson",
+  color: "#fff",
+  border: "none",
+  borderRadius: "10px",
+  cursor: "pointer",
+  fontWeight: "bold"
+},
+// ============================================
+// 🔥 USERS STATS GRID
+// ============================================
+statsGrid: {
   display: "grid",
   gridTemplateColumns:
-    "repeat(auto-fit,minmax(400px,1fr))",
+    "repeat(auto-fit,minmax(250px,1fr))",
   gap: "25px",
   marginBottom: "30px"
 },
 
-
-
-// =====================================================
-// 🔥 CHART BOX
-// =====================================================
-chartBox: {
+// ============================================
+// 🔥 USER CARD
+// ============================================
+card: {
   background: "#fff",
-  padding: "20px",
-  borderRadius: "15px",
+  padding: "25px",
+  borderRadius: "18px",
   boxShadow:
-    "0 5px 15px rgba(0,0,0,0.1)"
+    "0 4px 15px rgba(0,0,0,0.08)"
 },
 
-
-
-// =====================================================
-// 🔥 ORDERS TABLE
-// =====================================================
-ordersTable: {
+// ============================================
+// 🔥 USERS TABLE BOX
+// ============================================
+usersTableBox: {
   background: "#fff",
-  padding: "20px",
-  borderRadius: "15px",
+  padding: "25px",
+  borderRadius: "18px",
+  overflowX: "auto",
   boxShadow:
-    "0 5px 15px rgba(0,0,0,0.1)"
+    "0 4px 15px rgba(0,0,0,0.08)"
 },
 
-
-
-// =====================================================
+// ============================================
 // 🔥 TABLE
-// =====================================================
+// ============================================
 table: {
   width: "100%",
   borderCollapse: "collapse",
   marginTop: "20px"
 },
+
+// ============================================
+// 🔥 TABLE HEADER
+// ============================================
+th: {
+  textAlign: "left",
+  padding: "16px",
+  background: "#f3f4f6",
+  color: "#111827",
+  fontSize: "15px"
+},
+
+// ============================================
+// 🔥 TABLE DATA
+// ============================================
+td: {
+  padding: "16px",
+  borderBottom:
+    "1px solid #eee",
+  color: "#444"
+}
 
 };
 
