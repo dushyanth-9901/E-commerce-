@@ -16,31 +16,52 @@ import Cart from "./pages/Cart";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import Success from "./pages/Success";
+import ForgotPassword from "./pages/ForgotPassword";
 
 export default function App() {
 
   // =====================================================
   // 🔥 LOAD CART FROM LOCALSTORAGE
   // =====================================================
- const [cart, setCart] = useState(
+    const user =
+      JSON.parse(
+        localStorage.getItem("user")
+      );
 
-  JSON.parse(
-    localStorage.getItem("cart")
-  ) || []
+    const cartKey = user
+      ? `cart_${user.email}`
+      : "cart_guest";
 
-);
+    const [cart, setCart] =
+      useState(
 
+        JSON.parse(
+          localStorage.getItem(cartKey)
+        ) || []
+
+      );
   // =====================================================
-  // 🔥 SAVE CART
-  // =====================================================
-  useEffect(() => {
+// 🔥 SAVE USER CART
+// =====================================================
+      useEffect(() => {
 
-    localStorage.setItem(
-      "cart",
-      JSON.stringify(cart)
-    );
+        const user =
 
-  }, [cart]);
+          JSON.parse(
+            localStorage.getItem("user")
+          );
+
+        if (!user) return;
+
+        localStorage.setItem(
+
+          `cart_${user.email}`,
+
+          JSON.stringify(cart)
+
+        );
+
+      }, [cart]);
 
   return (
 
@@ -106,6 +127,11 @@ export default function App() {
         <Route
           path="/success"
           element={<Success />}
+        />
+
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
         />
 
       </Routes>

@@ -1,7 +1,10 @@
 function UsersPage({
 
   users,
-  styles
+  styles,
+
+  userSearch,
+  setUserSearch
 
 }) {
 
@@ -74,6 +77,15 @@ function UsersPage({
         </div>
 
       </div>
+      <input
+        type="text"
+        placeholder="Search Name or Email"
+        style={styles.search}
+        value={userSearch}
+        onChange={(e) =>
+          setUserSearch(e.target.value)
+        }
+      />
 
       {/* ===================================================== */}
       {/* 🔥 RECENT USERS */}
@@ -113,7 +125,31 @@ function UsersPage({
 
           <tbody>
 
-            {users.map((user) => (
+            {users
+
+              .filter((user) => {
+
+                const matchesSearch =
+
+                  user.name
+                    .toLowerCase()
+                    .includes(
+                      userSearch.toLowerCase()
+                    )
+
+                  ||
+
+                  user.email
+                    .toLowerCase()
+                    .includes(
+                      userSearch.toLowerCase()
+                    );
+
+                return matchesSearch;
+
+              })
+
+              .map((user) => (
 
               <tr key={user.id}>
 

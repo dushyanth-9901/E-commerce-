@@ -10,7 +10,13 @@ function OrdersPage({
   orderFilter,
   setOrderFilter,
 
-  updateOrderStatus
+  updateOrderStatus,
+
+  orderSearch,
+  setOrderSearch,
+
+  orderDateFilter,
+  setOrderDateFilter,
 
 }) {
 
@@ -50,6 +56,25 @@ function OrdersPage({
 
       {/* FILTERS */}
       <div style={styles.filterRow}>
+
+          <input
+            type="text"
+            placeholder="Search Product / Customer"
+            style={styles.search}
+            value={orderSearch}
+            onChange={(e) =>
+              setOrderSearch(e.target.value)
+            }
+          />
+
+          <input
+            type="date"
+            style={styles.search}
+            value={orderDateFilter}
+            onChange={(e) =>
+              setOrderDateFilter(e.target.value)
+            }
+          />
 
         {[
           "All",
@@ -115,21 +140,60 @@ function OrdersPage({
 
           <tbody>
 
-            {orders
+           {orders
 
-              .filter((order) =>
+          .filter((order) => {
 
-                orderFilter === "All"
+            // ✅ STATUS FILTER
+            const matchesStatus =
 
-                  ? true
+              orderFilter === "All"
 
-                  : order.status ===
-                    orderFilter
+                ? true
 
-              )
+                : order.status ===
+                  orderFilter;
 
+            // ✅ SEARCH FILTER
+            const matchesSearch =
+
+              order.product_name
+                .toLowerCase()
+                .includes(
+                  orderSearch.toLowerCase()
+                )
+
+              ||
+
+              order.full_name
+                .toLowerCase()
+                .includes(
+                  orderSearch.toLowerCase()
+                );
+
+            // ✅ DATE FILTER
+            const matchesDate =
+
+              orderDateFilter
+
+                ? order.created_at
+                    ?.split("T")[0] ===
+                  orderDateFilter
+
+                : true;
+
+            return (
+
+              matchesStatus &&
+              matchesSearch &&
+              matchesDate
+
+            );
+
+          })
+
+         
               .map((order) => (
-
                 <tr key={order.id}>
 
                   <td style={styles.td}>

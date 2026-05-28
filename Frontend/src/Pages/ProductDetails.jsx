@@ -1,677 +1,293 @@
 // 📁 src/pages/ProductDetails.jsx
 
-import {
-  useParams,
-  useNavigate
-} from "react-router-dom";
-
-import {
-  useEffect,
-  useState,
-  useMemo
-} from "react";
-
+import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 
 function ProductDetails({ cart, setCart }) {
 
-  // =====================================================
-  // 🔥 GET PRODUCT ID
-  // =====================================================
   const { id } = useParams();
-
-  // =====================================================
-  // 🔥 NAVIGATION
-  // =====================================================
   const navigate = useNavigate();
 
-  // =====================================================
-  // 🔥 STATES
-  // =====================================================
-  const [product, setProduct] =
-    useState(null);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [qty, setQty] = useState(1);
+  const [selectedImage, setSelectedImage] = useState("");
 
-  const [loading, setLoading] =
-    useState(true);
+  // =========================================
+  // GET CART KEY (SAFE)
+  // =========================================
+  const getCartKey = () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    return user ? `cart_${user.email}` : "cart_guest";
+  };
 
-  const [qty, setQty] =
-    useState(1);
-
-  const [selectedImage, setSelectedImage] =
-    useState("");
-
-
-  // =====================================================
-  // 🔥 FETCH PRODUCT
-  // =====================================================
+  // =========================================
+  // FETCH PRODUCT
+  // =========================================
   useEffect(() => {
-
     const fetchProduct = async () => {
-
       try {
+        const res = await axios.get("http://localhost:5000/api/products");
 
-        const res = await axios.get(
-          "http://localhost:5000/api/products"
+        const found = res.data.find(
+          (item) => item.id === Number(id)
         );
 
-        const foundProduct =
-          res.data.find(
-            (item) =>
-              item.id === Number(id)
-          );
-
-        setProduct(foundProduct);
-
-        setSelectedImage(
-          foundProduct.image
-        );
-
+        setProduct(found);
+        setSelectedImage(found.image);
         setLoading(false);
 
-      } catch (error) {
-
-        console.log(error);
-
+      } catch (err) {
+        console.log(err);
         setLoading(false);
-
       }
-
     };
 
     fetchProduct();
-
   }, [id]);
 
-
-
-  // =====================================================
-  // 🔥 ALL PRODUCT IMAGES
-  // =====================================================
+  // =========================================
+  // PRODUCT IMAGES
+  // =========================================
   const productImages = useMemo(() => {
-
     if (!product) return [];
 
-    let extraImages = [];
-
+    let extra = [];
     try {
-
-      extraImages = JSON.parse(
-        product.images || "[]"
-      );
-
+      extra = JSON.parse(product.images || "[]");
     } catch {
-
-      extraImages = [];
-
+      extra = [];
     }
 
-    return [
-
-      product.image,
-
-      ...extraImages.filter(Boolean)
-
-    ];
-
+    return [product.image, ...extra.filter(Boolean)];
   }, [product]);
 
-
-
-  // =====================================================
-  // 🔥 LOADING
-  // =====================================================
-  if (loading) {
-
-    return (
-
-      <h1 style={styles.loading}>
-        Loading Product...
-      </h1>
-
-    );
-
-  }
-
-
-
-  // =====================================================
-  // 🛒 ADD TO CART
-  // =====================================================
+  // =========================================
+  // ADD TO CART (FIXED FINAL VERSION)
+  // =========================================
   const addToCart = () => {
 
-    const isLoggedIn =
-      localStorage.getItem("isLoggedIn");
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
 
     if (!isLoggedIn) {
-
       alert("Please Login First");
-
       navigate("/login");
-
       return;
-
     }
 
-    // =====================================================
-    // 🔥 OLD CART
-    // =====================================================
-    const oldCart =
+    const cartKey = getCartKey();
+    const oldCart = JSON.parse(localStorage.getItem(cartKey)) || [];
 
-      JSON.parse(
-        localStorage.getItem("cart")
-      ) || [];
-
-
-
-    // =====================================================
-    // 🔥 CHECK EXISTING
-    // =====================================================
-    const existingProduct =
-      oldCart.find(
-        (item) =>
-          item.id === product.id
-      );
-
-    let updatedCart = [];
-
-
-
-    // =====================================================
-    // 🔥 UPDATE QUANTITY
-    // =====================================================
-    if (existingProduct) {
-
-      updatedCart = oldCart.map((item) =>
-
-        item.id === product.id
-
-          ? {
-
-              ...item,
-
-              quantity:
-                item.quantity + qty
-
-            }
-
-          : item
-
-      );
-
-    }
-
-
-
-    // =====================================================
-    // 🔥 NEW PRODUCT
-    // =====================================================
-    else {
-
-      updatedCart = [
-
-        ...oldCart,
-
-        {
-
-          ...product,
-
-          quantity: qty
-
-        }
-
-      ];
-
-    }
-
-
-
-    // =====================================================
-    // 🔥 UPDATE STATE
-    // =====================================================
-    setCart(updatedCart);
-
-
-
-    // =====================================================
-    // 🔥 SAVE LOCAL STORAGE
-    // =====================================================
-    localStorage.setItem(
-
-      "cart",
-
-      JSON.stringify(updatedCart)
-
+    const existing = oldCart.find(
+      (item) => item.id === product.id
     );
 
+    let updatedCart;
 
+    if (existing) {
+      updatedCart = oldCart.map((item) =>
+        item.id === product.id
+          ? { ...item, quantity: item.quantity + qty }
+          : item
+      );
+    } else {
+      updatedCart = [
+        ...oldCart,
+        { ...product, quantity: qty }
+      ];
+    }
+
+    // 🔥 UPDATE STATE (if parent uses it)
+    setCart(updatedCart);
+
+    // 🔥 SAVE TO USER CART KEY
+    localStorage.setItem(cartKey, JSON.stringify(updatedCart));
 
     alert("Added To Cart ✅");
-
   };
 
-
-
-  // =====================================================
-  // ⚡ BUY NOW
-  // =====================================================
+  // =========================================
+  // BUY NOW (UNCHANGED)
+  // =========================================
   const buyNow = async () => {
-
     try {
 
-      // =====================================================
-      // 🔥 LOGIN CHECK
-      // =====================================================
-      const isLoggedIn =
-        localStorage.getItem("isLoggedIn");
+      const isLoggedIn = localStorage.getItem("isLoggedIn");
 
       if (!isLoggedIn) {
-
         alert("Please Login First");
-
         navigate("/login");
-
         return;
-
       }
 
-
-
-      // =====================================================
-      // 🔥 CREATE PAYMENT ORDER
-      // =====================================================
       const order = await axios.post(
-
         "http://localhost:5000/api/payment/create-order",
-
-        {
-          amount:
-            product.price * qty
-        }
-
+        { amount: product.price * qty }
       );
 
-
-
-      // =====================================================
-      // 🔥 RAZORPAY OPTIONS
-      // =====================================================
       const options = {
-
         key: "rzp_test_SsfWvZhtYI6dCX",
-
         amount: order.data.amount,
-
         currency: order.data.currency,
-
         name: "E-Commerce Store",
-
         description: product.name,
-
         image: product.image,
-
         order_id: order.data.id,
 
-
-
-        // =====================================================
-        // ✅ PAYMENT SUCCESS
-        // =====================================================
         handler: function (response) {
 
-          // =====================================================
-          // 🔥 BUY ONLY THIS PRODUCT
-          // =====================================================
-          const singleOrder = [
+          const singleOrder = [{
+            ...product,
+            quantity: qty
+          }];
 
-            {
-
-              ...product,
-
-              quantity: qty
-
-            }
-
-          ];
-
-
-
-          // =====================================================
-          // 🔥 SAVE CHECKOUT PRODUCT
-          // =====================================================
           localStorage.setItem(
-
             "checkoutItems",
-
             JSON.stringify(singleOrder)
-
           );
 
-
-
-          // =====================================================
-          // 🔥 SAVE ORDER HISTORY
-          // =====================================================
           const oldOrders =
-
-            JSON.parse(
-              localStorage.getItem("orders")
-            ) || [];
-
-
+            JSON.parse(localStorage.getItem("orders")) || [];
 
           oldOrders.push({
-
-            productName:
-              product.name,
-
-            amount:
-              product.price * qty,
-
-            paymentId:
-              response.razorpay_payment_id
-
+            productName: product.name,
+            amount: product.price * qty,
+            paymentId: response.razorpay_payment_id
           });
 
-
-
           localStorage.setItem(
-
             "orders",
-
             JSON.stringify(oldOrders)
-
           );
 
-
-
-          // =====================================================
-          // ✅ SUCCESS MESSAGE
-          // =====================================================
           alert("Payment Successful ✅");
-
-
-
-          // =====================================================
-          // 🔥 GO SUCCESS PAGE
-          // =====================================================
-          navigate("/success");
-
+          navigate("/dashboard");
         },
 
-
-
-        // =====================================================
-        // 🔥 USER DETAILS
-        // =====================================================
         prefill: {
-
           name: "Customer",
-
           email: "customer@gmail.com",
-
           contact: "9999999999"
-
         },
 
-
-
-        // =====================================================
-        // 🔥 THEME
-        // =====================================================
         theme: {
           color: "#6c63ff"
         }
-
       };
 
-
-
-      // =====================================================
-      // 🔥 OPEN PAYMENT
-      // =====================================================
-      const razor =
-        new window.Razorpay(options);
-
+      const razor = new window.Razorpay(options);
       razor.open();
 
-    } catch (error) {
-
-      console.log(error);
-
+    } catch (err) {
+      console.log(err);
       alert("Payment Failed ❌");
-
     }
-
   };
 
+  // =========================================
+  // LOADING
+  // =========================================
+  if (loading) {
+    return <h1 style={{ textAlign: "center", marginTop: "100px" }}>Loading...</h1>;
+  }
 
+  if (!product) {
+    return <h1>Product Not Found</h1>;
+  }
 
+  // =========================================
+  // UI
+  // =========================================
   return (
-
     <div style={styles.container}>
 
-
-      {/* =====================================================
-          🔥 LEFT SIDE
-      ===================================================== */}
       <div style={styles.imageGallery}>
-
-
-        {/* MAIN IMAGE */}
         <div style={styles.mainImageBox}>
-
-          <img
-            src={selectedImage}
-            alt={product.name}
-            style={styles.mainImage}
-          />
-
+          <img src={selectedImage} style={styles.mainImage} />
         </div>
 
-
-
-        {/* SMALL IMAGES */}
         <div style={styles.thumbnailRow}>
-
-          {productImages.map((img, index) => (
-
+          {productImages.map((img, i) => (
             <img
-              key={index}
+              key={i}
               src={img}
-              alt=""
-
               style={{
                 ...styles.thumbnail,
-
-                border:
-                  selectedImage === img
-                    ? "3px solid #6c63ff"
-                    : "2px solid #ddd"
+                border: selectedImage === img ? "3px solid #6c63ff" : "2px solid #ddd"
               }}
-
-              onClick={() =>
-                setSelectedImage(img)
-              }
+              onClick={() => setSelectedImage(img)}
             />
-
           ))}
-
         </div>
-
       </div>
 
-
-
-      {/* =====================================================
-          🔥 RIGHT SIDE
-      ===================================================== */}
       <div style={styles.right}>
-
-
-        {/* PRODUCT NAME */}
         <h1 style={styles.title}>
-          {product.name}
-        </h1>
+              {product.name}
+            </h1>
 
+            <h2 style={styles.price}>
+              ₹ {product.price}
+            </h2>
 
+            <p style={styles.stock}>
+              {product.stock > 0
+                ? "✅ In Stock"
+                : "❌ Out Of Stock"}
+            </p>
 
-        {/* RATING */}
-        <div style={styles.rating}>
-          ⭐⭐⭐⭐☆ (4.5)
-        </div>
-
-
-
-        {/* PRICE */}
-        <h2 style={styles.price}>
-          ₹ {product.price}
-        </h2>
-
-
-
-        {/* STOCK */}
-        <p style={styles.stock}>
-
-          {product.stock > 0
-
-            ? "✅ In Stock"
-
-            : "❌ Out Of Stock"}
-
-        </p>
-
-
-
-        {/* DELIVERY */}
-        <p style={styles.delivery}>
-          🚚 Free Delivery By Tomorrow
-        </p>
-
-
-
-        {/* DESCRIPTION */}
-        <div style={styles.section}>
-
-          <h3>Description</h3>
-
-          <p style={styles.description}>
-
-            {product.description ||
-
-              "Premium quality product with modern design and excellent performance."}
-
-          </p>
-
-        </div>
-
-
-
-        {/* FEATURES */}
-        <div style={styles.section}>
-
-          <h3>Features</h3>
-
-          <ul style={styles.features}>
-
-            <li>Premium Build Quality</li>
-
-            <li>Long Lasting Performance</li>
-
-            <li>Stylish Design</li>
-
-            <li>Best Seller Product</li>
-
-          </ul>
-
-        </div>
-
-
-
-        {/* QUANTITY */}
+            <p style={styles.description}>
+              {product.description}
+            </p>
         <div style={styles.qtyContainer}>
-
-
-          <button
-            style={styles.qtyBtn}
-            onClick={() =>
-              setQty(
-                qty > 1
-                  ? qty - 1
-                  : 1
-              )
-            }
-          >
-            −
+             <button
+              style={styles.qtyBtn}
+              onClick={() =>
+                setQty(qty > 1 ? qty - 1 : 1)
+              }
+            >
+              −
+            </button>
+            <span style={styles.qtyText}>
+                {qty}
+            </span>
+            <button
+              style={styles.qtyBtn}
+              onClick={() => setQty(qty + 1)}
+            >
+              +
           </button>
+       </div>
 
-
-
-          <span style={styles.qtyText}>
-            {qty}
-          </span>
-
-
-
-          <button
-            style={styles.qtyBtn}
-            onClick={() =>
-              setQty(qty + 1)
-            }
-          >
-            +
-          </button>
-
-        </div>
-
-
-
-        {/* BUTTONS */}
-        <div style={styles.buttons}>
-
-
-          <button
-            style={styles.cartBtn}
-            onClick={addToCart}
-          >
+        <div style={styles.actionButtons}>
+          <button onClick={addToCart} style={styles.cartBtn}>
             Add To Cart
           </button>
 
-
-
-      <button
-            style={styles.buyBtn}
+          <button
             onClick={() => {
-
               addToCart();
-
               navigate("/cart");
-
             }}
-      >
+            style={styles.buyBtn}
+          >
             Buy Now
-      </button>
+          </button>
         </div>
-
       </div>
 
     </div>
-
   );
-
 }
 
-
-
-// =====================================================
-// 🎨 STYLES
-// =====================================================
 const styles = {
 
   container: {
     display: "flex",
-    gap: "40px",
-    padding: "40px",
-    background: "#f5f5f5",
+    gap: "60px",
+    padding: "50px",
+    background: "#f5f7fb",
     minHeight: "100vh",
     flexWrap: "wrap"
   },
@@ -679,141 +295,196 @@ const styles = {
   imageGallery: {
     display: "flex",
     flexDirection: "column",
-    gap: "15px",
-    alignItems: "center"
+    gap: "18px"
   },
 
   mainImageBox: {
-    width: "360px",
-    height: "360px",
+    width: "500px",
+    height: "500px",
+
     background: "#fff",
-    borderRadius: "15px",
+
+    borderRadius: "28px",
+
+    padding: "25px",
+
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    padding: "10px"
+
+    boxShadow:
+      "0 15px 40px rgba(0,0,0,0.08)"
   },
 
   mainImage: {
     width: "100%",
     height: "100%",
     objectFit: "contain",
-    borderRadius: "10px"
+    borderRadius: "20px"
   },
 
   thumbnailRow: {
     display: "flex",
-    gap: "10px",
+    gap: "15px",
     flexWrap: "wrap"
   },
 
   thumbnail: {
-    width: "70px",
-    height: "70px",
+    width: "85px",
+    height: "85px",
+
     objectFit: "cover",
-    borderRadius: "10px",
-    cursor: "pointer"
+
+    borderRadius: "18px",
+
+    cursor: "pointer",
+
+    background: "#fff",
+
+    padding: "6px",
+
+    transition: "0.3s",
+
+    boxShadow:
+      "0 5px 15px rgba(0,0,0,0.05)"
   },
 
   right: {
     flex: 1,
+
+    minWidth: "320px",
+
     background: "#fff",
-    padding: "30px",
-    borderRadius: "15px"
+
+    borderRadius: "30px",
+
+    padding: "45px",
+
+    boxShadow:
+      "0 15px 40px rgba(0,0,0,0.06)",
+
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px"
   },
 
   title: {
-    fontSize: "35px",
-    marginBottom: "10px"
-  },
-
-  rating: {
-    color: "#f59e0b",
-    fontSize: "18px",
-    marginBottom: "20px"
+    fontSize: "42px",
+    fontWeight: "800",
+    color: "#111827",
+    lineHeight: "1.2"
   },
 
   price: {
-    color: "#6c63ff",
-    marginBottom: "15px"
+    fontSize: "38px",
+    fontWeight: "800",
+    color: "#6c63ff"
   },
 
   stock: {
-    color: "green",
-    fontWeight: "bold"
-  },
+    display: "inline-block",
 
-  delivery: {
-    marginTop: "10px",
-    color: "#444"
-  },
+    background: "#dcfce7",
 
-  section: {
-    marginTop: "30px"
+    color: "#166534",
+
+    padding: "10px 18px",
+
+    borderRadius: "999px",
+
+    fontWeight: "700",
+
+    width: "fit-content"
   },
 
   description: {
-    color: "#555",
-    lineHeight: "1.8"
-  },
-
-  features: {
-    lineHeight: "2"
+    color: "#6b7280",
+    lineHeight: "1.9",
+    fontSize: "16px"
   },
 
   qtyContainer: {
     display: "flex",
     alignItems: "center",
     gap: "20px",
-    marginTop: "30px"
+    marginTop: "10px"
   },
 
   qtyBtn: {
-    width: "40px",
-    height: "40px",
+    width: "48px",
+    height: "48px",
+
     border: "none",
-    background: "#6c63ff",
+
+    borderRadius: "14px",
+
+    background: "#111827",
+
     color: "#fff",
-    borderRadius: "8px",
+
+    fontSize: "22px",
+
     cursor: "pointer",
-    fontSize: "20px"
+
+    fontWeight: "700"
   },
 
   qtyText: {
-    fontSize: "22px",
-    fontWeight: "bold"
+    fontSize: "24px",
+    fontWeight: "700",
+    minWidth: "30px",
+    textAlign: "center"
   },
 
-  buttons: {
+  actionButtons: {
     display: "flex",
     gap: "20px",
-    marginTop: "30px",
+    marginTop: "25px",
     flexWrap: "wrap"
   },
 
   cartBtn: {
-    padding: "14px 30px",
+    padding: "18px 35px",
+
     border: "none",
-    background: "#6c63ff",
+
+    borderRadius: "18px",
+
+    background:
+      "linear-gradient(135deg,#6c63ff,#4f46e5)",
+
     color: "#fff",
-    borderRadius: "10px",
+
+    fontWeight: "700",
+
+    fontSize: "16px",
+
     cursor: "pointer",
-    fontWeight: "bold"
+
+    boxShadow:
+      "0 10px 25px rgba(99,102,241,0.3)"
   },
 
   buyBtn: {
-    padding: "14px 30px",
-    border: "none",
-    background: "#111",
-    color: "#fff",
-    borderRadius: "10px",
-    cursor: "pointer",
-    fontWeight: "bold"
-  },
+    padding: "18px 35px",
 
-  loading: {
-    textAlign: "center",
-    marginTop: "100px"
+    border: "none",
+
+    borderRadius: "18px",
+
+    background:
+      "linear-gradient(135deg,#111827,#374151)",
+
+    color: "#fff",
+
+    fontWeight: "700",
+
+    fontSize: "16px",
+
+    cursor: "pointer",
+
+    boxShadow:
+      "0 10px 25px rgba(17,24,39,0.25)"
   }
 
 };

@@ -40,6 +40,9 @@ function AdminDashboard() {
 
   const [loading, setLoading] =
     useState(true);
+   
+  const [userSearch, setUserSearch] =
+  useState("");  
 
   // =====================================================
   // 🔥 PRODUCTS STATES
@@ -89,6 +92,12 @@ function AdminDashboard() {
 
 const [orderFilter, setOrderFilter] =
   useState("All");
+
+const [orderSearch, setOrderSearch] =
+  useState("");
+
+const [orderDateFilter, setOrderDateFilter] =
+  useState(""); 
   // =====================================================
   // 🔐 ADMIN PROTECTION
   // =====================================================
@@ -616,6 +625,11 @@ const monthSales =
             setOrderFilter={setOrderFilter}
 
             updateOrderStatus={updateOrderStatus}
+            orderSearch={orderSearch}
+            setOrderSearch={setOrderSearch}
+
+            orderDateFilter={orderDateFilter}
+            setOrderDateFilter={setOrderDateFilter}
           />
 
         )}
@@ -626,10 +640,13 @@ const monthSales =
          
        <UsersPage
 
-        users={users}
-        styles={styles}
+      users={users}
+      styles={styles}
 
-       />
+      userSearch={userSearch}
+      setUserSearch={setUserSearch}
+
+/>
 
         )}
 

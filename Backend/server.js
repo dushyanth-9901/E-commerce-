@@ -13,6 +13,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const authRoutes = require("./routes/auth");
 
 
 // 🔥 MIDDLEWARE
@@ -32,6 +33,8 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/users", userRoutes);
 
 app.use("/api/orders", orderRoutes);
+
+app.use("/api/auth", authRoutes);
 
 
 // 🔥 TEST ROUTE

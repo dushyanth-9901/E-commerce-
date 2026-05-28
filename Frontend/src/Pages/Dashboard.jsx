@@ -94,62 +94,38 @@ function Dashboard({ cart, setCart }) {
   // =====================================================
   const addToCart = (product) => {
 
-    // ✅ CHECK PRODUCT EXISTS
-    const existingProduct =
-      cart.find(
-        (item) => item.id === product.id
-      );
+  const user = JSON.parse(localStorage.getItem("user"));
+  const cartKey = user ? `cart_${user.email}` : "cart_guest";
 
+  const oldCart = JSON.parse(localStorage.getItem(cartKey)) || [];
 
+  const existingProduct = oldCart.find(
+    (item) => item.id === product.id
+  );
 
-    // ✅ IF PRODUCT ALREADY EXISTS
-    if (existingProduct) {
+  let updatedCart;
 
-      const updatedCart =
-        cart.map((item) =>
+  if (existingProduct) {
+    updatedCart = oldCart.map((item) =>
+      item.id === product.id
+        ? { ...item, quantity: item.quantity + 1 }
+        : item
+    );
+  } else {
+    updatedCart = [
+      ...oldCart,
+      { ...product, quantity: 1 }
+    ];
+  }
 
-          item.id === product.id
+  // 🔥 SAVE TO STATE
+  setCart(updatedCart);
 
-            ? {
-                ...item,
-                quantity:
-                  item.quantity + 1
-              }
+  // 🔥 SAVE TO LOCALSTORAGE (MOST IMPORTANT)
+  localStorage.setItem(cartKey, JSON.stringify(updatedCart));
 
-            : item
-
-        );
-
-
-
-      setCart(updatedCart);
-
-    }
-
-
-
-    // ✅ NEW PRODUCT
-    else {
-
-      setCart([
-
-        ...cart,
-
-        {
-          ...product,
-          quantity: 1
-        }
-
-      ]);
-
-    }
-
-
-
-    alert("Added To Cart ✅");
-
-  };
-
+  alert("Added To Cart ✅");
+};
 
 
 
