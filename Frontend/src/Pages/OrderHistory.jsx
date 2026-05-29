@@ -1,3 +1,4 @@
+import jsPDF from "jspdf";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -29,18 +30,226 @@ function OrderHistory() {
 
   };
 
+// ======================================
+// LOAD ORDERS
+// ======================================
+      useEffect(() => {
+
+        if (user?.email) {
+
+          fetchOrders();
+
+        }
+
+      }, [user]);
+
+  const downloadInvoice = (order) => {
+
+  const doc = new jsPDF();
+
   // ======================================
-  // LOAD ORDERS
+  // BACKGROUND HEADER
   // ======================================
-  useEffect(() => {
 
-    if (user?.email) {
+  doc.setFillColor(17, 24, 39);
 
-      fetchOrders();
+  doc.rect(0, 0, 220, 40, "F");
 
-    }
+  // ======================================
+  // PROJECT NAME
+  // ======================================
 
-  }, [user]);
+  doc.setFontSize(28);
+
+  doc.setTextColor(255, 255, 255);
+
+  doc.setFont("helvetica", "bold");
+
+  doc.text("ShopEase", 20, 25);
+
+  // ======================================
+  // INVOICE TITLE
+  // ======================================
+
+  doc.setFontSize(18);
+
+  doc.text("OFFICIAL INVOICE", 140, 25);
+
+  // ======================================
+  // RESET TEXT COLOR
+  // ======================================
+
+  doc.setTextColor(0, 0, 0);
+
+  // ======================================
+  // INVOICE BOX
+  // ======================================
+
+  doc.setDrawColor(220);
+
+  doc.roundedRect(15, 50, 180, 120, 5, 5);
+
+  // ======================================
+  // ORDER INFO
+  // ======================================
+
+  doc.setFontSize(16);
+
+  doc.setFont("helvetica", "bold");
+
+  doc.text("Order Details", 25, 65);
+
+  doc.setFont("helvetica", "normal");
+
+  doc.setFontSize(13);
+
+  doc.text(
+    `Invoice ID: INV-${order.id}`,
+    25,
+    80
+  );
+
+  doc.text(
+    `Product: ${order.product_name}`,
+    25,
+    92
+  );
+
+  doc.text(
+    `Amount Paid: ₹${order.amount}`,
+    25,
+    104
+  );
+
+  doc.text(
+    `Payment Method: ${order.payment_method}`,
+    25,
+    116
+  );
+
+  doc.text(
+    `Payment Status: ${order.payment_status}`,
+    25,
+    128
+  );
+
+  doc.text(
+    `Order Status: ${order.order_status}`,
+    25,
+    140
+  );
+
+  // ======================================
+  // CUSTOMER DETAILS
+  // ======================================
+
+  doc.setFont("helvetica", "bold");
+
+  doc.text("Customer Details", 110, 65);
+
+  doc.setFont("helvetica", "normal");
+
+  doc.text(
+    `Name: ${order.full_name}`,
+    110,
+    80
+  );
+
+  doc.text(
+    `Phone: ${order.phone}`,
+    110,
+    92
+  );
+
+  doc.text(
+    `Pincode: ${order.pincode}`,
+    110,
+    104
+  );
+
+  // ADDRESS
+  const address = `
+${order.address_line},
+${order.village},
+${order.taluk},
+${order.district},
+${order.state}
+`;
+
+  doc.text(
+    address,
+    110,
+    118
+  );
+
+  // ======================================
+  // DATE
+  // ======================================
+
+  doc.setFont("helvetica", "bold");
+
+  doc.text(
+    "Order Date:",
+    25,
+    160
+  );
+
+  doc.setFont("helvetica", "normal");
+
+  doc.text(
+    new Date(order.created_at)
+      .toLocaleString(),
+    60,
+    160
+  );
+
+  // ======================================
+  // SEAL
+  // ======================================
+
+  doc.setDrawColor(99, 102, 241);
+
+  doc.setFillColor(99, 102, 241);
+
+  doc.circle(165, 220, 18, "FD");
+
+  doc.setFontSize(10);
+
+  doc.setTextColor(255, 255, 255);
+
+  doc.text(
+    "PAID",
+    158,
+    223
+  );
+
+  // ======================================
+  // FOOTER
+  // ======================================
+
+  doc.setTextColor(120);
+
+  doc.setFontSize(11);
+
+  doc.text(
+    "Thank you for shopping with ShopEase ❤️",
+    55,
+    270
+  );
+
+  doc.text(
+    "This is a computer generated invoice.",
+    52,
+    278
+  );
+
+  // ======================================
+  // SAVE PDF
+  // ======================================
+
+  doc.save(`ShopEase_Invoice_${order.id}.pdf`);
+
+};
 
   return (
 
@@ -95,6 +304,31 @@ function OrderHistory() {
               {new Date(order.created_at)
                 .toLocaleString()}
             </p>
+            
+      {order.order_status === "Delivered" ? (
+
+          <button
+              style={styles.invoiceBtn}
+              onClick={() =>
+                downloadInvoice(order)
+              }
+          >
+              Download Invoice
+          </button>
+
+          ) : (
+
+           <button
+              style={{
+                ...styles.invoiceBtn,
+                background: "#9ca3af",
+                cursor: "not-allowed"
+              }}
+            >
+              Invoice Available After Delivery
+           </button>
+
+          )}
 
             {/* ====================================== */}
             {/* 🔥 STATUS TIMELINE */}
@@ -342,6 +576,26 @@ const styles = {
   borderRadius: "18px",
 
   marginBottom: "20px"
+
+},
+invoiceBtn: {
+
+  marginTop: "20px",
+
+  padding: "14px 22px",
+
+  border: "none",
+
+  borderRadius: "14px",
+
+  background:
+    "linear-gradient(135deg,#111827,#374151)",
+
+  color: "#fff",
+
+  fontWeight: "700",
+
+  cursor: "pointer"
 
 },
 
