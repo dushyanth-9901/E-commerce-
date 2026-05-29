@@ -345,7 +345,14 @@ function Auth() {
           style={styles.input}
         />
 
-
+       <p
+        style={styles.forgotText}
+        onClick={() =>
+          navigate("/reset-password")
+        }
+      >
+        Forgot Password?
+      </p>
 
 
 
@@ -562,7 +569,15 @@ const styles = {
     border: "none",
     cursor: "pointer",
     fontWeight: "bold"
-  }
+  },
+  forgotText: {
+  color: "#6c63ff",
+  cursor: "pointer",
+  marginTop: "10px",
+  fontSize: "14px",
+  textAlign: "right",
+  fontWeight: "600"
+},
 
 };
 

@@ -15,8 +15,12 @@ router.post("/save", (req, res) => {
 
     user_email,
     product_name,
+    product_image,
     amount,
     payment_id,
+
+    payment_method,
+    payment_status,
 
     full_name,
     phone,
@@ -37,8 +41,12 @@ router.post("/save", (req, res) => {
 
       user_email,
       product_name,
+      product_image,
       amount,
       payment_id,
+
+      payment_method,
+      payment_status,
 
       full_name,
       phone,
@@ -49,12 +57,11 @@ router.post("/save", (req, res) => {
       pincode,
       address_line,
 
-     order_status
-
+      order_status
 
     )
 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 
   `;
 
@@ -64,28 +71,29 @@ router.post("/save", (req, res) => {
 
     sql,
 
-   [
+    [
 
-  user_email,
-  product_name,
-  amount,
-  payment_id,
+      user_email,
+      product_name,
+      product_image,
+      amount,
+      payment_id,
 
-  payment_method,
-  payment_status,
+      payment_method,
+      payment_status,
 
-  full_name,
-  phone,
-  state,
-  district,
-  taluk,
-  village,
-  pincode,
-  address_line,
+      full_name,
+      phone,
+      state,
+      district,
+      taluk,
+      village,
+      pincode,
+      address_line,
 
-  "Processing"
+      "Processing"
 
-],
+    ],
 
     (err, result) => {
 
@@ -136,42 +144,86 @@ router.get("/", (req, res) => {
 
 
 // =====================================================
-// 🔥 UPDATE ORDER STATUS
+// ✅ GET USER ORDERS
 // =====================================================
-router.put("/:id", async (req, res) => {
+router.get("/user/:email", (req, res) => {
 
-  try {
+  const { email } = req.params;
 
-   const { order_status } = req.body;
+  const sql = `
 
-    await db.query(
+    SELECT * FROM orders
+    WHERE user_email = ?
+    ORDER BY id DESC
 
-      `
-      UPDATE orders
-      SET order_status = ?
-      WHERE id = ?
-      `,
+  `;
 
-      [order_status, req.params.id]
+  db.query(
 
-    );
+    sql,
 
-    res.json({
-      success: true
-    });
+    [email],
 
-  } catch (error) {
+    (err, result) => {
 
-    console.log(error);
+      if (err) {
 
-    res.status(500).json({
-      error: error.message
-    });
+        return res.status(500).json(err);
 
-  }
+      }
+
+      res.json(result);
+
+    }
+
+  );
 
 });
 
 
 
+// =====================================================
+// 🔥 UPDATE ORDER STATUS
+// =====================================================
+router.put("/:id", (req, res) => {
+
+  const { order_status } = req.body;
+
+  db.query(
+
+    `
+    UPDATE orders
+    SET order_status = ?
+    WHERE id = ?
+    `,
+
+    [order_status, req.params.id],
+
+    (err, result) => {
+
+      if (err) {
+
+        console.log(err);
+
+        return res.status(500).json({
+          error: "Update Failed"
+        });
+
+      }
+
+      res.json({
+        success: true
+      });
+
+    }
+
+  );
+
+});
+
+
+
+// =====================================================
+// 🔥 EXPORT ROUTER
+// =====================================================
 module.exports = router;

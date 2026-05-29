@@ -1,4 +1,151 @@
+const express = require("express");
+
+const router = express.Router();
+
 const bcrypt = require("bcrypt");
+
+const db = require("../config/db");
+
+const {
+
+  registerUser,
+  loginUser
+
+} = require("../controllers/authController");
+
+// ============================================
+// ✅ REGISTER
+// ============================================
+
+router.post("/register", registerUser);
+
+// ============================================
+// ✅ LOGIN
+// ============================================
+
+router.post("/login", loginUser);
+
+// ============================================
+// ✅ SAVE ADDRESS
+// ============================================
+
+router.put("/save-address", (req, res) => {
+
+  const {
+
+    email,
+    fullName,
+    phone,
+    state,
+    district,
+    taluk,
+    village,
+    pincode,
+    addressLine
+
+  } = req.body;
+
+  const sql = `
+
+    UPDATE users
+
+    SET
+
+      full_name = ?,
+      phone = ?,
+      state = ?,
+      district = ?,
+      taluk = ?,
+      village = ?,
+      pincode = ?,
+      address_line = ?
+
+    WHERE email = ?
+
+  `;
+
+  db.query(
+
+    sql,
+
+    [
+
+      fullName,
+      phone,
+      state,
+      district,
+      taluk,
+      village,
+      pincode,
+      addressLine,
+
+      email
+
+    ],
+
+    (err, result) => {
+
+      if (err) {
+
+        console.log(err);
+
+        return res.status(500).json({
+          error: "Address Save Failed"
+        });
+
+      }
+
+      res.json({
+        message: "Address Saved ✅"
+      });
+
+    }
+
+  );
+
+});
+
+// ============================================
+// ✅ GET USER ADDRESS
+// ============================================
+
+router.get("/address/:email", (req, res) => {
+
+  const sql =
+    "SELECT * FROM users WHERE email=?";
+
+  db.query(
+
+    sql,
+
+    [req.params.email],
+
+    (err, result) => {
+
+      if (err) {
+
+        console.log(err);
+
+        return res.status(500).json(err);
+
+      }
+
+      if (result.length === 0) {
+
+        return res.status(404).json({
+          message: "User Not Found"
+        });
+
+      }
+
+      res.json(result[0]);
+
+    }
+
+  );
+
+});
+
 // ============================================
 // 🔥 RESET PASSWORD
 // ============================================
@@ -18,9 +165,6 @@ router.post(
 
       } = req.body;
 
-      // ============================================
-      // 🔍 CHECK USER
-      // ============================================
       db.query(
 
         "SELECT * FROM users WHERE email=?",
@@ -31,9 +175,7 @@ router.post(
 
           if (err) {
 
-            return res
-              .status(500)
-              .json(err);
+            return res.status(500).json(err);
 
           }
 
@@ -46,9 +188,7 @@ router.post(
 
           }
 
-          // ============================================
           // 🔐 HASH PASSWORD
-          // ============================================
           const hashedPassword =
 
             await bcrypt.hash(
@@ -56,9 +196,7 @@ router.post(
               10
             );
 
-          // ============================================
           // 💾 UPDATE PASSWORD
-          // ============================================
           db.query(
 
             "UPDATE users SET password=? WHERE email=?",
@@ -69,9 +207,7 @@ router.post(
 
               if (err2) {
 
-                return res
-                  .status(500)
-                  .json(err2);
+                return res.status(500).json(err2);
 
               }
 
@@ -99,3 +235,5 @@ router.post(
   }
 
 );
+
+module.exports = router;

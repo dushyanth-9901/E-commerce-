@@ -48,13 +48,47 @@ const addressKey = user?.email
   // 🔥 LOAD SAVED ADDRESS (FIXED)
   // =====================================================
   useEffect(() => {
-    const savedAddress =
-  JSON.parse(localStorage.getItem(addressKey));
 
-    if (savedAddress) {
-      setAddress(savedAddress);
+  const fetchAddress = async () => {
+
+    try {
+
+      const res = await axios.get(
+        `http://localhost:5000/api/users/address/${user.email}`
+      );
+
+      if (res.data) {
+
+        setAddress({
+
+          fullName: res.data.full_name || "",
+          phone: res.data.phone || "",
+          state: res.data.state || "",
+          district: res.data.district || "",
+          taluk: res.data.taluk || "",
+          village: res.data.village || "",
+          pincode: res.data.pincode || "",
+          addressLine: res.data.address_line || ""
+
+        });
+
+      }
+
+    } catch (error) {
+
+      console.log(error);
+
     }
-  }, []);
+
+  };
+
+  if (user?.email) {
+
+    fetchAddress();
+
+  }
+
+}, []);
 
   // =====================================================
   // ❌ REMOVE PRODUCT
@@ -115,24 +149,29 @@ const addressKey = user?.email
 
             const user = JSON.parse(localStorage.getItem("user"));
 
-            await axios.post(
-              "http://localhost:5000/api/orders/save",
-              {
-                user_email: user.email,
-                product_name: product.name,
-                amount: product.price * product.quantity,
-                payment_id: response.razorpay_payment_id,
+           await axios.post(
+            "http://localhost:5000/api/orders/save",
+            {
+              user_email: user.email,
+              product_name: product.name,
+              product_image: product.image,
+              amount: product.price * product.quantity,
 
-                full_name: address.fullName,
-                phone: address.phone,
-                state: address.state,
-                district: address.district,
-                taluk: address.taluk,
-                village: address.village,
-                pincode: address.pincode,
-                address_line: address.addressLine
-              }
-            );
+              payment_id: response.razorpay_payment_id,
+
+              payment_method: "Razorpay",
+              payment_status: "Paid",
+
+              full_name: address.fullName,
+              phone: address.phone,
+              state: address.state,
+              district: address.district,
+              taluk: address.taluk,
+              village: address.village,
+              pincode: address.pincode,
+              address_line: address.addressLine
+            }
+          );
 
             const updatedCart = cart.filter(
               (item) => item.id !== product.id
@@ -191,6 +230,27 @@ const addressKey = user?.email
     addressKey,
     JSON.stringify(address)
      );
+
+     axios.put(
+
+  "http://localhost:5000/api/auth/save-address",
+
+  {
+
+    email: user.email,
+
+    fullName: address.fullName,
+    phone: address.phone,
+    state: address.state,
+    district: address.district,
+    taluk: address.taluk,
+    village: address.village,
+    pincode: address.pincode,
+    addressLine: address.addressLine
+
+  }
+
+);
     setShowAddressForm(false);
     handlePayment(selectedProduct);
   };

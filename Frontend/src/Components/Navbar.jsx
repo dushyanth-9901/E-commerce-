@@ -176,9 +176,10 @@ function Navbar({
                   My Cart
                 </button>
 
-                <button
-                  style={
-                    styles.menuBtn
+               <button
+                  style={styles.menuBtn}
+                  onClick={() =>
+                    navigate("/order-history")
                   }
                 >
                   Orders

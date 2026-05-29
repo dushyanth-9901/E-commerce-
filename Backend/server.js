@@ -10,7 +10,6 @@ const app = express();
 const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-const authRoutes = require("./routes/authRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const authRoutes = require("./routes/auth");
@@ -22,7 +21,7 @@ app.use(cors());
 app.use(express.json());
 
 // 🔥 ROUTES
-app.use("/api/auth",authRoutes);
+app.use("/api/auth", authRoutes);
 
 app.use("/api/products", productRoutes);
 
@@ -33,8 +32,6 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/users", userRoutes);
 
 app.use("/api/orders", orderRoutes);
-
-app.use("/api/auth", authRoutes);
 
 
 // 🔥 TEST ROUTE

@@ -57,28 +57,29 @@ function OrdersPage({
       {/* FILTERS */}
       <div style={styles.filterRow}>
 
-          <input
-            type="text"
-            placeholder="Search Product / Customer"
-            style={styles.search}
-            value={orderSearch}
-            onChange={(e) =>
-              setOrderSearch(e.target.value)
-            }
-          />
+        <input
+          type="text"
+          placeholder="Search Product / Customer"
+          style={styles.search}
+          value={orderSearch}
+          onChange={(e) =>
+            setOrderSearch(e.target.value)
+          }
+        />
 
-          <input
-            type="date"
-            style={styles.search}
-            value={orderDateFilter}
-            onChange={(e) =>
-              setOrderDateFilter(e.target.value)
-            }
-          />
+        <input
+          type="date"
+          style={styles.search}
+          value={orderDateFilter}
+          onChange={(e) =>
+            setOrderDateFilter(e.target.value)
+          }
+        />
 
         {[
           "All",
-          "Pending",
+          "Processing",
+          "Shipped",
           "Delivered",
           "Cancelled"
         ].map((item) => (
@@ -130,70 +131,66 @@ function OrdersPage({
                 Status
               </th>
 
-              <th style={styles.th}>
-                Actions
-              </th>
-
             </tr>
 
           </thead>
 
           <tbody>
 
-           {orders
+            {orders
 
-          .filter((order) => {
+              .filter((order) => {
 
-            // ✅ STATUS FILTER
-            const matchesStatus =
+                // ✅ STATUS FILTER
+                const matchesStatus =
 
-              orderFilter === "All"
+                  orderFilter === "All"
 
-                ? true
+                    ? true
 
-                : order.status ===
-                  orderFilter;
+                    : order.order_status ===
+                      orderFilter;
 
-            // ✅ SEARCH FILTER
-            const matchesSearch =
+                // ✅ SEARCH FILTER
+                const matchesSearch =
 
-              order.product_name
-                .toLowerCase()
-                .includes(
-                  orderSearch.toLowerCase()
-                )
+                  order.product_name
+                    .toLowerCase()
+                    .includes(
+                      orderSearch.toLowerCase()
+                    )
 
-              ||
+                  ||
 
-              order.full_name
-                .toLowerCase()
-                .includes(
-                  orderSearch.toLowerCase()
-                );
+                  order.full_name
+                    .toLowerCase()
+                    .includes(
+                      orderSearch.toLowerCase()
+                    );
 
-            // ✅ DATE FILTER
-            const matchesDate =
+                // ✅ DATE FILTER
+                const matchesDate =
 
-              orderDateFilter
-
-                ? order.created_at
-                    ?.split("T")[0] ===
                   orderDateFilter
 
-                : true;
+                    ? order.created_at
+                        ?.split("T")[0] ===
+                      orderDateFilter
 
-            return (
+                    : true;
 
-              matchesStatus &&
-              matchesSearch &&
-              matchesDate
+                return (
 
-            );
+                  matchesStatus &&
+                  matchesSearch &&
+                  matchesDate
 
-          })
+                );
 
-         
+              })
+
               .map((order) => (
+
                 <tr key={order.id}>
 
                   <td style={styles.td}>
@@ -212,60 +209,70 @@ function OrdersPage({
                     ₹ {order.amount}
                   </td>
 
+                  {/* 🔥 STATUS DROPDOWN */}
                   <td style={styles.td}>
 
-                    <span
+                    <select
+
+                      value={
+                        order.order_status ||
+                        "Processing"
+                      }
+
+                      onChange={(e) =>
+
+                        updateOrderStatus(
+
+                          order.id,
+                          e.target.value
+
+                        )
+
+                      }
+
                       style={{
+                        padding: "8px",
+                        borderRadius: "8px",
+                        fontWeight: "bold",
+
                         color:
-                          order.status === "Delivered"
+
+                          order.order_status ===
+                          "Delivered"
+
                             ? "green"
-                            : order.status === "Cancelled"
+
+                            : order.order_status ===
+                              "Cancelled"
+
                             ? "red"
-                            : "#f59e0b",
-                        fontWeight: "bold"
+
+                            : "#f59e0b"
                       }}
+
                     >
 
-                      {order.status}
+                      <option value="Processing">
+                        Processing
+                      </option>
 
-                    </span>
+                      <option value="Shipped">
+                        Shipped
+                      </option>
 
-                  </td>
+                      <option value="Out For Delivery">
+                        Out For Delivery
+                      </option>
 
-                  <td style={styles.td}>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "10px"
-                      }}
-                    >
-
-                      <button
-                        style={styles.deliverBtn}
-                        onClick={() =>
-                          updateOrderStatus(
-                            order.id,
-                            "Delivered"
-                          )
-                        }
-                      >
+                      <option value="Delivered">
                         Delivered
-                      </button>
+                      </option>
 
-                      <button
-                        style={styles.cancelBtn}
-                        onClick={() =>
-                          updateOrderStatus(
-                            order.id,
-                            "Cancelled"
-                          )
-                        }
-                      >
-                        Cancel
-                      </button>
+                      <option value="Cancelled">
+                        Cancelled
+                      </option>
 
-                    </div>
+                    </select>
 
                   </td>
 

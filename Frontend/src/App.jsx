@@ -16,7 +16,8 @@ import Cart from "./pages/Cart";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import Success from "./pages/Success";
-import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import OrderHistory from "./pages/OrderHistory";
 
 export default function App() {
 
@@ -128,10 +129,13 @@ export default function App() {
           path="/success"
           element={<Success />}
         />
-
+       <Route
+          path="/reset-password"
+          element={<ResetPassword />}
+        />
         <Route
-          path="/forgot-password"
-          element={<ForgotPassword />}
+          path="/order-history"
+          element={<OrderHistory />}
         />
 
       </Routes>

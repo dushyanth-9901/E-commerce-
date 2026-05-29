@@ -490,7 +490,7 @@ const monthSales =
     0
 
   );
-  const updateOrderStatus = async (
+ const updateOrderStatus = async (
 
   id,
   status
@@ -503,7 +503,9 @@ const monthSales =
 
       `http://localhost:5000/api/orders/${id}`,
 
-      { status }
+      {
+        order_status: status
+      }
 
     );
 
