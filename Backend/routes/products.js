@@ -74,3 +74,35 @@ router.post("/", (req, res) => {
 });
 
 module.exports = router;
+
+// ✅ DELETE PRODUCT
+router.delete("/:id", (req, res) => {
+
+  const { id } = req.params;
+
+  const sql =
+    "DELETE FROM products WHERE id = ?";
+
+  db.query(
+    sql,
+    [id],
+    (err, result) => {
+
+      if (err) {
+
+        console.log(err);
+
+        return res.status(500).json({
+          message: "Delete Failed"
+        });
+
+      }
+
+      res.json({
+        message: "Product Deleted"
+      });
+
+    }
+  );
+
+});

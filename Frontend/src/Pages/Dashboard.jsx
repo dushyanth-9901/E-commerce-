@@ -1,11 +1,11 @@
-
+3
 
 import { useState, useEffect } from "react";
-import Navbar from "../components/Navbar";
-import ProductCard from "../components/ProductCard";
+import Navbar from "../Components/Navbar";
+import ProductCard from "../Components/ProductCard";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Footer from "../components/Footer";
+import Footer from "../Components/Footer";
 
 function Dashboard({ cart }) {
 

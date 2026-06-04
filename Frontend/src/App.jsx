@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState } from "react";
 
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import ProductDetails from "./pages/ProductDetails";
-import Cart from "./pages/Cart";
-import AdminLogin from "./pages/AdminLogin";
-import AdminDashboard from "./pages/AdminDashboard";
+import Auth from "./Pages/Auth";
+import Dashboard from "./Pages/Dashboard";
+import ProductDetails from "./Pages/ProductDetails";
+import Cart from "./Pages/Cart";
+import AdminLogin from "./Pages/AdminLogin";
+import AdminDashboard from "./Pages/AdminDashboard";
 
 export default function App() {
   const [cart, setCart] = useState([]);
