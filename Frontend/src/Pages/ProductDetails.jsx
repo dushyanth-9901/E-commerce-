@@ -14,6 +14,16 @@ function ProductDetails({ cart, setCart }) {
   const [qty, setQty] = useState(1);
   const [selectedImage, setSelectedImage] = useState("");
 
+  const user = JSON.parse(localStorage.getItem("user"));
+  const getWishlistKey = () =>
+    user ? `wishlist_${user.email}` : "wishlist_guest";
+  const reviewsKey = `reviews_${id}`;
+
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+
   // =========================================
   // GET CART KEY (SAFE)
   // =========================================
@@ -47,6 +57,26 @@ function ProductDetails({ cart, setCart }) {
     fetchProduct();
   }, [id]);
 
+  useEffect(() => {
+    const wishlist =
+      JSON.parse(
+        localStorage.getItem(getWishlistKey())
+      ) || [];
+
+    setIsWishlisted(
+      wishlist.some(
+        (item) => item.id === Number(id)
+      )
+    );
+
+    const savedReviews =
+      JSON.parse(
+        localStorage.getItem(reviewsKey)
+      ) || [];
+
+    setReviews(savedReviews);
+  }, [id]);
+
   // =========================================
   // PRODUCT IMAGES
   // =========================================
@@ -67,6 +97,10 @@ function ProductDetails({ cart, setCart }) {
   // ADD TO CART (FIXED FINAL VERSION)
   // =========================================
   const addToCart = () => {
+    if (product?.stock <= 0) {
+      alert("Cannot add out of stock product");
+      return;
+    }
 
     const isLoggedIn = localStorage.getItem("isLoggedIn");
 
@@ -98,10 +132,7 @@ function ProductDetails({ cart, setCart }) {
       ];
     }
 
-    // 🔥 UPDATE STATE (if parent uses it)
     setCart(updatedCart);
-
-    // 🔥 SAVE TO USER CART KEY
     localStorage.setItem(cartKey, JSON.stringify(updatedCart));
 
     alert("Added To Cart ✅");
@@ -112,6 +143,10 @@ function ProductDetails({ cart, setCart }) {
   // =========================================
   const buyNow = async () => {
     try {
+      if (product?.stock <= 0) {
+        alert("Cannot purchase out of stock product");
+        return;
+      }
 
       const isLoggedIn = localStorage.getItem("isLoggedIn");
 
@@ -185,6 +220,72 @@ function ProductDetails({ cart, setCart }) {
     }
   };
 
+  const toggleWishlist = () => {
+    if (!localStorage.getItem("isLoggedIn")) {
+      alert("Please login to manage your wishlist.");
+      navigate("/login");
+      return;
+    }
+
+    const key = getWishlistKey();
+    const current =
+      JSON.parse(localStorage.getItem(key)) || [];
+
+    const exists = current.some(
+      (item) => item.id === product.id
+    );
+
+    const updated = exists
+      ? current.filter((item) => item.id !== product.id)
+      : [...current, product];
+
+    localStorage.setItem(key, JSON.stringify(updated));
+    setIsWishlisted(!exists);
+    alert(
+      exists
+        ? "Removed from wishlist ✅"
+        : "Added to wishlist ✅"
+    );
+  };
+
+  const submitReview = () => {
+    if (!localStorage.getItem("isLoggedIn")) {
+      alert("Please login to submit a review.");
+      navigate("/login");
+      return;
+    }
+
+    if (!comment.trim()) {
+      alert("Please add a review comment.");
+      return;
+    }
+
+    const reviewer = JSON.parse(
+      localStorage.getItem("user")
+    );
+
+    const saved =
+      JSON.parse(localStorage.getItem(reviewsKey)) || [];
+
+    const newReview = {
+      id: Date.now(),
+      name: reviewer?.name || reviewer?.email || "Guest",
+      rating,
+      comment,
+      date: new Date().toISOString()
+    };
+
+    const updatedReviews = [newReview, ...saved];
+    localStorage.setItem(
+      reviewsKey,
+      JSON.stringify(updatedReviews)
+    );
+    setReviews(updatedReviews);
+    setRating(5);
+    setComment("");
+    alert("Review submitted ✅");
+  };
+
   // =========================================
   // LOADING
   // =========================================
@@ -223,23 +324,41 @@ function ProductDetails({ cart, setCart }) {
       </div>
 
       <div style={styles.right}>
-        <h1 style={styles.title}>
-              {product.name}
-            </h1>
+        <h1 style={styles.title}>{product.name}</h1>
 
-            <h2 style={styles.price}>
-              ₹ {product.price}
-            </h2>
+        {product.category && (
+          <p style={styles.category}>
+            Category: {product.category}
+          </p>
+        )}
 
-            <p style={styles.stock}>
-              {product.stock > 0
-                ? "✅ In Stock"
-                : "❌ Out Of Stock"}
-            </p>
+        <h2 style={styles.price}>₹ {product.price}</h2>
 
-            <p style={styles.description}>
-              {product.description}
-            </p>
+        <p style={styles.stock}>
+          {product.stock > 0
+            ? "✅ In Stock"
+            : "❌ Out Of Stock"}
+        </p>
+
+        <p style={styles.rating}>
+          ⭐ {reviews.length > 0 ? (
+            (reviews.reduce((acc, item) => acc + Number(item.rating || 0), 0) / reviews.length).toFixed(1)
+          ) : (
+            "No ratings yet"
+          )} {reviews.length > 0 && `(${reviews.length} reviews)`}
+        </p>
+
+        <p style={styles.description}>
+          {product.description}
+        </p>
+
+        <button
+          onClick={toggleWishlist}
+          style={styles.wishlistBtn}
+        >
+          {isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+        </button>
+
         <div style={styles.qtyContainer}>
              <button
               style={styles.qtyBtn}
@@ -261,19 +380,95 @@ function ProductDetails({ cart, setCart }) {
        </div>
 
         <div style={styles.actionButtons}>
-          <button onClick={addToCart} style={styles.cartBtn}>
-            Add To Cart
+          <button
+            onClick={addToCart}
+            style={{
+              ...styles.cartBtn,
+              opacity: product.stock === 0 ? 0.6 : 1,
+              cursor: product.stock === 0 ? "not-allowed" : "pointer"
+            }}
+            disabled={product.stock === 0}
+          >
+            {product.stock === 0 ? "Out of Stock" : "Add To Cart"}
           </button>
 
           <button
             onClick={() => {
+              if (product.stock === 0) return;
               addToCart();
               navigate("/cart");
             }}
-            style={styles.buyBtn}
+            style={{
+              ...styles.buyBtn,
+              opacity: product.stock === 0 ? 0.6 : 1,
+              cursor: product.stock === 0 ? "not-allowed" : "pointer"
+            }}
+            disabled={product.stock === 0}
           >
-            Buy Now
+            {product.stock === 0 ? "Out of Stock" : "Buy Now"}
           </button>
+        </div>
+
+        <div style={styles.reviewSection}>
+          <h2 style={styles.sectionTitle}>Customer Reviews</h2>
+
+          <div style={styles.reviewForm}>
+            <label style={styles.label}>
+              Rating:
+              <select
+                value={rating}
+                onChange={(e) =>
+                  setRating(Number(e.target.value))
+                }
+                style={styles.select}
+              >
+                {[5, 4, 3, 2, 1].map((value) => (
+                  <option key={value} value={value}>
+                    {value} Star{value > 1 ? "s" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <textarea
+              value={comment}
+              onChange={(e) =>
+                setComment(e.target.value)
+              }
+              placeholder="Write your review..."
+              style={styles.textarea}
+            />
+
+            <button
+              style={styles.submitReviewBtn}
+              onClick={submitReview}
+            >
+              Submit Review
+            </button>
+          </div>
+
+          {reviews.length === 0 ? (
+            <p style={styles.emptyReview}>
+              No reviews yet. Be the first to review this product.
+            </p>
+          ) : (
+            reviews.map((review) => (
+              <div
+                key={review.id}
+                style={styles.reviewCard}
+              >
+                <p style={styles.reviewMeta}>
+                  <strong>{review.name}</strong> · {review.rating} ⭐
+                </p>
+                <p style={styles.reviewComment}>
+                  {review.comment}
+                </p>
+                <p style={styles.reviewDate}>
+                  {new Date(review.date).toLocaleDateString()}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -401,6 +596,111 @@ const styles = {
     color: "#6b7280",
     lineHeight: "1.9",
     fontSize: "16px"
+  },
+
+  category: {
+    color: "#374151",
+    fontSize: "16px",
+    fontWeight: "600"
+  },
+
+  rating: {
+    color: "#d97706",
+    fontSize: "16px",
+    fontWeight: "700"
+  },
+
+  wishlistBtn: {
+    border: "none",
+    borderRadius: "14px",
+    padding: "14px 22px",
+    background: "#ec4899",
+    color: "#fff",
+    fontWeight: "700",
+    cursor: "pointer",
+    width: "fit-content"
+  },
+
+  reviewSection: {
+    background: "#f8fafc",
+    padding: "25px",
+    borderRadius: "24px",
+    marginTop: "20px"
+  },
+
+  sectionTitle: {
+    fontSize: "24px",
+    marginBottom: "18px",
+    fontWeight: "700"
+  },
+
+  reviewForm: {
+    display: "grid",
+    gap: "12px",
+    marginBottom: "20px"
+  },
+
+  label: {
+    display: "flex",
+    flexDirection: "column",
+    color: "#111827",
+    fontWeight: "600"
+  },
+
+  select: {
+    marginTop: "8px",
+    padding: "12px",
+    borderRadius: "12px",
+    border: "1px solid #d1d5db",
+    outline: "none"
+  },
+
+  textarea: {
+    minHeight: "120px",
+    padding: "14px",
+    borderRadius: "16px",
+    border: "1px solid #d1d5db",
+    outline: "none",
+    resize: "vertical"
+  },
+
+  submitReviewBtn: {
+    width: "fit-content",
+    padding: "14px 22px",
+    border: "none",
+    borderRadius: "14px",
+    background: "#2563eb",
+    color: "#fff",
+    fontWeight: "700",
+    cursor: "pointer"
+  },
+
+  emptyReview: {
+    color: "#6b7280"
+  },
+
+  reviewCard: {
+    background: "#fff",
+    padding: "18px",
+    borderRadius: "20px",
+    boxShadow: "0 10px 25px rgba(15,23,42,0.05)",
+    marginBottom: "12px"
+  },
+
+  reviewMeta: {
+    marginBottom: "8px",
+    color: "#111827"
+  },
+
+  reviewComment: {
+    color: "#4b5563",
+    lineHeight: "1.8",
+    marginBottom: "10px"
+  },
+
+  reviewDate: {
+    color: "#6b7280",
+    fontSize: "13px"
   },
 
   qtyContainer: {

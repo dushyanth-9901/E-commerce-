@@ -43,6 +43,13 @@ const addressKey = user?.email
 
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+
+  const [couponCode, setCouponCode] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponError, setCouponError] = useState("");
 
   // =====================================================
   // 🔥 LOAD SAVED ADDRESS (FIXED)
@@ -108,6 +115,46 @@ const addressKey = user?.email
   };
 
   // =====================================================
+  // 🎟️ APPLY COUPON
+  // =====================================================
+  const applyCoupon = () => {
+    setCouponError("");
+    if (!couponCode.trim()) {
+      setCouponError("Enter a coupon code");
+      return;
+    }
+
+    const validCoupons = {
+      "SAVE10": 10,
+      "SAVE20": 20,
+      "WELCOME": 15,
+      "FLAT50": 50,
+      "SUMMER25": 25,
+      "HOLIDAY30": 30,
+      "FESTIVE40": 40,
+      "NEWUSER": 18,
+      "FLASH": 35
+    };
+
+    if (validCoupons[couponCode.toUpperCase()]) {
+      setCouponDiscount(validCoupons[couponCode.toUpperCase()]);
+      setCouponApplied(true);
+      setCouponError("");
+    } else {
+      setCouponError("Invalid coupon code");
+      setCouponDiscount(0);
+      setCouponApplied(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCouponCode("");
+    setCouponDiscount(0);
+    setCouponApplied(false);
+    setCouponError("");
+  };
+
+  // =====================================================
   // 💳 HANDLE PAYMENT
   // =====================================================
   const handlePayment = async (product) => {
@@ -128,10 +175,14 @@ const addressKey = user?.email
         return;
       }
 
+      const baseAmount = product.price * product.quantity;
+      const discountAmount = (baseAmount * couponDiscount) / 100;
+      const finalAmount = baseAmount - discountAmount;
+
       const res = await axios.post(
         "http://localhost:5000/api/payment/create-order",
         {
-          amount: product.price * product.quantity
+          amount: Math.round(finalAmount)
         }
       );
 
@@ -149,7 +200,11 @@ const addressKey = user?.email
 
             const user = JSON.parse(localStorage.getItem("user"));
 
-           await axios.post(
+           const baseAmount = product.price * product.quantity;
+            const discountAmount = (baseAmount * couponDiscount) / 100;
+            const finalAmount = baseAmount - discountAmount;
+
+            await axios.post(
             "http://localhost:5000/api/orders/save",
             {
               product_id: product.id,
@@ -157,7 +212,10 @@ const addressKey = user?.email
               user_email: user.email,
               product_name: product.name,
               product_image: product.image,
-              amount: product.price * product.quantity,
+              amount: Math.round(finalAmount),
+              base_amount: baseAmount,
+              discount: couponDiscount,
+              coupon_code: couponApplied ? couponCode : null,
 
               payment_id: response.razorpay_payment_id,
 
@@ -193,8 +251,14 @@ const addressKey = user?.email
               JSON.stringify(updatedCart)
             );
 
-            alert("Payment Successful ✅");
-            navigate("/success");
+            setShowSuccessPopup(true);
+
+          setTimeout(() => {
+
+            navigate("/dashboard");
+
+          }, 2500);
+            
 
           } catch (error) {
             console.log(error);
@@ -268,6 +332,7 @@ const addressKey = user?.email
   // UI
   // =====================================================
   return (
+
     <div style={styles.container}>
 
       <h1 style={styles.heading}>My Cart 🛒</h1>
@@ -329,6 +394,12 @@ const addressKey = user?.email
                 ₹ {product.price}
               </p>
 
+              {couponApplied && (
+                <p style={{ color: "#10b981", fontSize: "14px", fontWeight: "600" }}>
+                  ✅ {couponDiscount}% Discount Applied
+                </p>
+              )}
+
               <p style={styles.qtyText}>
                 Quantity: {product.quantity}
               </p>
@@ -359,7 +430,8 @@ const addressKey = user?.email
                   address.state &&
                   address.addressLine
                 ) {
-                  handlePayment(product);
+                  setSelectedProduct(product);
+                  setShowCouponModal(true);
                 }
 
                 // ✅ NEW USER
@@ -532,6 +604,47 @@ const addressKey = user?.email
         }
       />
 
+      {/* COUPON */}
+      <div style={styles.sectionTitle}>
+        Coupon Code (Optional)
+      </div>
+
+      {!couponApplied ? (
+        <div style={styles.couponContainer}>
+          <input
+            placeholder="e.g., SAVE10, WELCOME"
+            style={styles.couponInput}
+            value={couponCode}
+            onChange={(e) => {
+              setCouponCode(e.target.value);
+              setCouponError("");
+            }}
+          />
+          <button
+            style={styles.couponBtn}
+            onClick={applyCoupon}
+          >
+            Apply
+          </button>
+        </div>
+      ) : (
+        <div style={styles.couponApplied}>
+          <p>✅ {couponCode} applied ({couponDiscount}% off)</p>
+          <button
+            style={styles.removeCouponBtn}
+            onClick={removeCoupon}
+          >
+            Remove
+          </button>
+        </div>
+      )}
+
+      {couponError && (
+        <p style={{ color: "red", fontSize: "12px" }}>
+          {couponError}
+        </p>
+      )}
+
       {/* BUTTON */}
       <button
         style={styles.saveBtn}
@@ -540,13 +653,177 @@ const addressKey = user?.email
         Save & Continue
       </button>
 
-    </div>
+       </div>
+        </div>    
+      )}
 
-  </div>
+      {/* ===================================================== */}
+      {/* 🎟️ COUPON MODAL (BEFORE PAYMENT) */}
+      {/* ===================================================== */}
+      {showCouponModal && (
+        <div style={styles.popupOverlay}>
+          <div style={styles.couponModalBox}>
+            {/* HEADER */}
+            <div style={styles.topSection}>
+              <div>
+                <p style={styles.smallText}>
+                  Step 2: Review & Apply Coupon
+                </p>
+                <h2 style={styles.popupTitle}>
+                  Have a Coupon? 🎟️
+                </h2>
+              </div>
+              <button
+                style={styles.closeBtn}
+                onClick={() => {
+                  setShowCouponModal(false);
+                  setCouponCode("");
+                  setCouponDiscount(0);
+                  setCouponApplied(false);
+                  setCouponError("");
+                }}
+              >
+                ✕
+              </button>
+            </div>
 
-)}
+            {/* ORDER SUMMARY */}
+            <div style={styles.summaryBox}>
+              <h3 style={{ marginBottom: "12px" }}>Order Summary</h3>
+              <p style={styles.summaryText}>
+                Product: {selectedProduct?.name}
+              </p>
+              <p style={styles.summaryText}>
+                Price: ₹{selectedProduct?.price}
+              </p>
+              <p style={styles.summaryText}>
+                Quantity: {selectedProduct?.quantity}
+              </p>
+              <p style={{
+                ...styles.summaryText,
+                fontSize: "16px",
+                fontWeight: "700",
+                color: "#111827",
+                marginTop: "8px"
+              }}>
+                Subtotal: ₹{selectedProduct?.price * selectedProduct?.quantity}
+              </p>
+            </div>
 
-    </div>
+            {/* COUPON INPUT */}
+            <div style={styles.sectionTitle}>
+              Enter Coupon Code (Optional)
+            </div>
+
+            {!couponApplied ? (
+              <div style={styles.couponContainer}>
+                <input
+                  placeholder="e.g., SAVE10, WELCOME"
+                  style={styles.couponInput}
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value);
+                    setCouponError("");
+                  }}
+                />
+                <button
+                  style={styles.couponBtn}
+                  onClick={applyCoupon}
+                >
+                  Apply
+                </button>
+              </div>
+            ) : (
+              <div style={styles.couponApplied}>
+                <div>
+                  <p style={{ margin: 0, fontWeight: "700" }}>
+                    ✅ {couponCode} applied
+                  </p>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#6b7280" }}>
+                    {couponDiscount}% discount
+                  </p>
+                </div>
+                <button
+                  style={styles.removeCouponBtn}
+                  onClick={removeCoupon}
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+
+            {couponError && (
+              <p style={{ color: "red", fontSize: "12px", margin: "8px 0" }}>
+                {couponError}
+              </p>
+            )}
+
+            {/* DISCOUNT PREVIEW */}
+            {couponApplied && (
+              <div style={styles.discountPreview}>
+                <p>Base: ₹{selectedProduct?.price * selectedProduct?.quantity}</p>
+                <p>
+                  Discount: -₹{Math.round((selectedProduct?.price * selectedProduct?.quantity * couponDiscount) / 100)}
+                </p>
+                <p style={{ fontWeight: "700", color: "#10b981" }}>
+                  Total: ₹{Math.round((selectedProduct?.price * selectedProduct?.quantity) * (1 - couponDiscount / 100))}
+                </p>
+              </div>
+            )}
+
+            {/* BUTTONS */}
+            <div style={styles.buttonGroup}>
+              <button
+                style={styles.skipBtn}
+                onClick={() => {
+                  setShowCouponModal(false);
+                  removeCoupon();
+                  handlePayment(selectedProduct);
+                }}
+              >
+                Skip & Pay Now
+              </button>
+              <button
+                style={styles.proceedBtn}
+                onClick={() => {
+                  setShowCouponModal(false);
+                  handlePayment(selectedProduct);
+                }}
+              >
+                {couponApplied ? "Proceed with Discount ✅" : "Proceed to Payment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================== */}
+      {showSuccessPopup && (
+
+        <div style={styles.popupOverlay}>
+
+          <div style={styles.successPopup}>
+
+            <h2>🎉 Order Placed Successfully</h2>
+
+            <p>
+              Thank you for ordering with ShopEase.
+            </p>
+
+            <button
+              onClick={() =>
+                setShowSuccessPopup(false)
+              }
+            >
+              OK
+            </button>
+
+          </div>
+
+        </div>
+
+      )}
+    </div>  
   );
 }
 
@@ -824,7 +1101,194 @@ editAddressBtn: {
 
   fontWeight: "700"
 },
+successPopup: {
 
+  background: "#fff",
+
+  padding: "40px",
+
+  borderRadius: "20px",
+
+  textAlign: "center",
+
+  width: "400px"
+
+},
+
+successBtn: {
+
+  marginTop: "20px",
+
+  padding: "14px 24px",
+
+  border: "none",
+
+  borderRadius: "12px",
+
+  background: "#111827",
+
+  color: "#fff",
+
+  cursor: "pointer",
+
+  fontWeight: "700"
+
+},
+
+successOverlay: {
+
+  position: "fixed",
+
+  top: 0,
+  left: 0,
+
+  width: "100%",
+  height: "100%",
+
+  background:
+    "rgba(0,0,0,0.45)",
+
+  backdropFilter: "blur(6px)",
+
+  display: "flex",
+
+  justifyContent: "center",
+
+  alignItems: "center",
+
+  zIndex: 9999
+
+},
+
+successPopup: {
+
+  background: "#fff",
+
+  padding: "40px",
+
+  borderRadius: "24px",
+
+  textAlign: "center",
+
+  minWidth: "400px",
+
+  boxShadow:
+    "0 20px 50px rgba(0,0,0,0.2)"
+
+},
+
+couponContainer: {
+  display: "flex",
+  gap: "12px",
+  marginBottom: "10px"
+},
+
+couponInput: {
+  flex: 1,
+  padding: "14px 16px",
+  borderRadius: "12px",
+  border: "1px solid #e5e7eb",
+  outline: "none",
+  fontSize: "14px",
+  background: "#fff"
+},
+
+couponBtn: {
+  padding: "14px 24px",
+  background: "#3b82f6",
+  color: "#fff",
+  border: "none",
+  borderRadius: "12px",
+  cursor: "pointer",
+  fontWeight: "700",
+  fontSize: "14px"
+},
+
+couponApplied: {
+  background: "#dbeafe",
+  padding: "14px 16px",
+  borderRadius: "12px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "10px"
+},
+
+removeCouponBtn: {
+  background: "#ef4444",
+  color: "#fff",
+  border: "none",
+  padding: "8px 16px",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "600",
+  fontSize: "12px"
+},
+
+couponModalBox: {
+  width: "520px",
+  background: "#fff",
+  padding: "35px",
+  borderRadius: "24px",
+  boxShadow: "0 20px 50px rgba(0,0,0,0.2)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "16px",
+  maxHeight: "90vh",
+  overflowY: "auto"
+},
+
+summaryBox: {
+  background: "#f9fafb",
+  padding: "18px 16px",
+  borderRadius: "14px",
+  border: "1px solid #e5e7eb"
+},
+
+summaryText: {
+  margin: "6px 0",
+  color: "#374151",
+  fontSize: "14px"
+},
+
+discountPreview: {
+  background: "#f0fdf4",
+  padding: "16px",
+  borderRadius: "12px",
+  border: "1px solid #bbf7d0",
+  fontSize: "14px",
+  color: "#166534"
+},
+
+buttonGroup: {
+  display: "flex",
+  gap: "12px",
+  marginTop: "16px"
+},
+
+skipBtn: {
+  flex: 1,
+  padding: "14px 20px",
+  background: "#e5e7eb",
+  color: "#374151",
+  border: "none",
+  borderRadius: "12px",
+  cursor: "pointer",
+  fontWeight: "700",
+  fontSize: "14px"
+},
+
+proceedBtn: {
+  flex: 1,
+  padding: "14px 20px",
+  background: "#10b981",
+  color: "#fff",
+  border: "none",
+  borderRadius: "12px",
+  cursor: "pointer",
+  fontWeight: "700",
+  fontSize: "14px"
+}
 };
 
 export default Cart;

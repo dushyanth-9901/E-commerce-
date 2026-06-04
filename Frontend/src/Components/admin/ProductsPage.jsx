@@ -86,6 +86,19 @@ function ProductsPage({
         />
 
         <input
+          type="text"
+          placeholder="Category"
+          style={styles.input}
+          value={form.category}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              category: e.target.value
+            })
+          }
+        />
+
+        <input
           type="number"
           placeholder="Stock"
           style={styles.input}

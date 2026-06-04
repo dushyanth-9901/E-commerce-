@@ -18,6 +18,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Success from "./pages/Success";
 import ResetPassword from "./pages/ResetPassword";
 import OrderHistory from "./pages/OrderHistory";
+import Wishlist from "./pages/Wishlist";
 
 export default function App() {
 
@@ -136,6 +137,13 @@ export default function App() {
         <Route
           path="/order-history"
           element={<OrderHistory />}
+        />
+        <Route
+          path="/wishlist"
+          element={<Wishlist
+            cart={cart}
+            setCart={setCart}
+          />}
         />
 
       </Routes>

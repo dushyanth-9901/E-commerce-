@@ -18,6 +18,9 @@ router.post("/save", (req, res) => {
     product_name,
     product_image,
     amount,
+    base_amount,
+    discount,
+    coupon_code,
     payment_id,
 
     payment_method,
@@ -40,13 +43,15 @@ router.post("/save", (req, res) => {
 
     INSERT INTO orders (
 
-
       user_email,
       product_id,
       quantity, 
       product_name,
       product_image,
       amount,
+      base_amount,
+      discount,
+      coupon_code,
       payment_id,
 
       payment_method,
@@ -65,7 +70,7 @@ router.post("/save", (req, res) => {
 
     )
 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 
   `;
 
@@ -83,6 +88,9 @@ router.post("/save", (req, res) => {
       product_name,
       product_image,
       amount,
+      base_amount || amount,
+      discount || 0,
+      coupon_code || null,
       payment_id,
 
       payment_method,

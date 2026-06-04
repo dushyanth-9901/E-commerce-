@@ -58,6 +58,7 @@ function AdminDashboard() {
       name: "",
       price: "",
       stock: "",
+      category: "",
       image: "",
       image2: "",
       image3: "",
@@ -84,6 +85,7 @@ function AdminDashboard() {
     name: "",
     price: "",
     stock: "",
+    category: "",
     image: "",
     image2: "",
     image3: "",
@@ -169,6 +171,7 @@ const [orderDateFilter, setOrderDateFilter] =
       !form.name ||
       !form.price ||
       !form.stock ||
+      !form.category ||
       !form.image
     ) {
       alert("Fill all fields");
@@ -183,6 +186,7 @@ const [orderDateFilter, setOrderDateFilter] =
           name: form.name,
           price: Number(form.price),
           stock: Number(form.stock),
+          category: form.category,
           image: form.image,
           images: JSON.stringify([
               form.image2,
@@ -199,6 +203,7 @@ const [orderDateFilter, setOrderDateFilter] =
         name: "",
         price: "",
         stock: "",
+        category: "",
         image: "",
         image2: "",
         image3: "",
@@ -257,6 +262,7 @@ const [orderDateFilter, setOrderDateFilter] =
             name: product.name,
             price: product.price,
             stock: product.stock,
+            category: product.category || "",
             image: product.image,
 
             image2: extraImages[0] || "",
@@ -284,6 +290,8 @@ const [orderDateFilter, setOrderDateFilter] =
         price: Number(editForm.price),
 
         stock: Number(editForm.stock),
+
+        category: editForm.category,
 
         image: editForm.image,
 
@@ -671,6 +679,18 @@ const monthSales =
                 setEditForm({
                   ...editForm,
                   name: e.target.value
+                })
+              }
+            />
+            <input
+              type="text"
+              placeholder="Category"
+              style={styles.input}
+              value={editForm.category}
+              onChange={(e) =>
+                setEditForm({
+                  ...editForm,
+                  category: e.target.value
                 })
               }
             />

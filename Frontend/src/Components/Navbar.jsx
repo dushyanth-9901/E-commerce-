@@ -31,6 +31,15 @@ function Navbar({
       "isLoggedIn"
     );
 
+  const wishlistItems =
+    JSON.parse(
+      localStorage.getItem(
+        user ? `wishlist_${user.email}` : "wishlist_guest"
+      )
+    ) || [];
+
+  const wishlistCount = wishlistItems.length;
+
   // =====================================================
   // 🔥 DROPDOWN
   // =====================================================
@@ -101,6 +110,19 @@ function Navbar({
 
       {/* RIGHT */}
       <div style={styles.right}>
+
+        {/* WISHLIST */}
+        <div
+          style={styles.cartWrapper}
+          onClick={() =>
+            navigate("/wishlist")
+          }
+        >
+          🧡
+          <span style={styles.badge}>
+            {wishlistCount}
+          </span>
+        </div>
 
         {/* CART */}
         <div
