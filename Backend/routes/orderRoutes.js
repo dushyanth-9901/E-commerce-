@@ -12,7 +12,8 @@ const db = require("../config/db");
 router.post("/save", (req, res) => {
 
   const {
-
+    product_id,
+    quantity,
     user_email,
     product_name,
     product_image,
@@ -39,7 +40,10 @@ router.post("/save", (req, res) => {
 
     INSERT INTO orders (
 
+
       user_email,
+      product_id,
+      quantity, 
       product_name,
       product_image,
       amount,
@@ -61,7 +65,7 @@ router.post("/save", (req, res) => {
 
     )
 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 
   `;
 
@@ -74,6 +78,8 @@ router.post("/save", (req, res) => {
     [
 
       user_email,
+      product_id,
+      quantity,
       product_name,
       product_image,
       amount,

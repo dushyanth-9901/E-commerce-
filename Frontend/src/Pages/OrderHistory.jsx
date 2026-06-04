@@ -45,7 +45,21 @@ function OrderHistory() {
 
   const downloadInvoice = (order) => {
 
-  const doc = new jsPDF();
+  const doc = new jsPDF(
+  "p",
+  "mm",
+  "a4"
+);
+
+  
+   const subtotal = Number(order.amount);
+
+   const gst = (subtotal * 18) / 100;
+
+   const total = subtotal + gst; 
+
+   const invoiceNumber =
+  `INV-${order.id}-${Date.now()}`;
 
   // ======================================
   // BACKGROUND HEADER
@@ -70,11 +84,26 @@ function OrderHistory() {
   // ======================================
   // INVOICE TITLE
   // ======================================
+      doc.setFontSize(26);
 
-  doc.setFontSize(18);
+      doc.text("SHOPEASE", 20, 20);
 
-  doc.text("OFFICIAL INVOICE", 140, 25);
+      doc.setFontSize(12);
 
+      doc.text(
+        "Premium Ecommerce Store",
+        20,
+        28
+      );
+      
+   doc.setFontSize(10);
+
+    doc.text(
+      "GSTIN: 29ABCDE1234F1Z5",
+      20,
+      34
+    );
+     
   // ======================================
   // RESET TEXT COLOR
   // ======================================
@@ -86,169 +115,193 @@ function OrderHistory() {
   // ======================================
 
   doc.setDrawColor(220);
+    doc.roundedRect(
+        15,
+        50,
+        180,
+        240,
+        5,
+        5
+      );
+// ======================================
+// ORDER DETAILS
+// ======================================
 
-  doc.roundedRect(15, 50, 180, 120, 5, 5);
+doc.setFontSize(16);
+doc.setFont("helvetica", "bold");
 
-  // ======================================
-  // ORDER INFO
-  // ======================================
+doc.text("Order Details", 20, 65);
 
-  doc.setFontSize(16);
+doc.line(20, 70, 190, 70);
 
-  doc.setFont("helvetica", "bold");
+doc.setFontSize(12);
+doc.setFont("helvetica", "normal");
 
-  doc.text("Order Details", 25, 65);
+doc.text("Invoice ID", 20, 85);
+doc.text(":", 55, 85);
+doc.text(invoiceNumber, 65, 85);
 
-  doc.setFont("helvetica", "normal");
+doc.text("Product", 20, 95);
+doc.text(":", 55, 95);
+doc.text(order.product_name, 65, 95);
 
-  doc.setFontSize(13);
+doc.text("Subtotal", 20, 105);
+doc.text(":", 55, 105);
+doc.text(`₹${subtotal}`, 65, 105);
 
-  doc.text(
-    `Invoice ID: INV-${order.id}`,
-    25,
-    80
-  );
+doc.text("GST (18%)", 20, 115);
+doc.text(":", 55, 115);
+doc.text(`₹${gst.toFixed(2)}`, 65, 115);
 
-  doc.text(
-    `Product: ${order.product_name}`,
-    25,
-    92
-  );
+doc.text("Total", 20, 125);
+doc.text(":", 55, 125);
+doc.text(`₹${total.toFixed(2)}`, 65, 125);
+doc.text("Customer ID", 20, 135);
+doc.text(":", 55, 135);
+doc.text
+  `CUST-${order.user_id || order.id}`,
+  65,
+  135
 
-  doc.text(
-    `Amount Paid: ₹${order.amount}`,
-    25,
-    104
-  );
+doc.line(20, 135, 190, 135);
 
-  doc.text(
-    `Payment Method: ${order.payment_method}`,
-    25,
-    116
-  );
+// divider
 
-  doc.text(
-    `Payment Status: ${order.payment_status}`,
-    25,
-    128
-  );
+doc.line(
+  20,
+  138,
+  190,
+  138
+);
 
-  doc.text(
-    `Order Status: ${order.order_status}`,
-    25,
-    140
-  );
+// ======================================
+// CUSTOMER DETAILS
+// ======================================
 
-  // ======================================
-  // CUSTOMER DETAILS
-  // ======================================
+doc.setFont("helvetica", "bold");
 
-  doc.setFont("helvetica", "bold");
+doc.text("Customer Details", 20, 215);
 
-  doc.text("Customer Details", 110, 65);
+doc.line(20, 220, 95, 220);
 
-  doc.setFont("helvetica", "normal");
+doc.setFont("helvetica", "normal");
 
-  doc.text(
-    `Name: ${order.full_name}`,
-    110,
-    80
-  );
+doc.text("Name", 20, 232);
+doc.text(":", 50, 232);
+doc.text(order.full_name || "-", 60, 232);
 
-  doc.text(
-    `Phone: ${order.phone}`,
-    110,
-    92
-  );
+doc.text("Phone", 20, 242);
+doc.text(":", 50, 242);
+doc.text(order.phone || "-", 60, 242);
 
-  doc.text(
-    `Pincode: ${order.pincode}`,
-    110,
-    104
-  );
+// ======================================
+// PAYMENT DETAILS
+// ======================================
 
-  // ADDRESS
-  const address = `
-${order.address_line},
-${order.village},
-${order.taluk},
-${order.district},
-${order.state}
-`;
+doc.setFont("helvetica", "bold");
 
-  doc.text(
-    address,
-    110,
-    118
-  );
+doc.text("Payment Details", 20, 150);
 
-  // ======================================
-  // DATE
-  // ======================================
+doc.line(20, 155, 190, 155);
 
-  doc.setFont("helvetica", "bold");
+doc.setFont("helvetica", "normal");
 
-  doc.text(
-    "Order Date:",
-    25,
-    160
-  );
+doc.text("Payment Method", 20, 170);
+doc.text(":", 55, 170);
+doc.text(order.payment_method || "-", 65, 170);
 
-  doc.setFont("helvetica", "normal");
+doc.text("Payment Status", 20, 180);
+doc.text(":", 55, 180);
+doc.text(order.payment_status || "-", 65, 180);
 
-  doc.text(
-    new Date(order.created_at)
-      .toLocaleString(),
-    60,
-    160
-  );
+doc.text("Order Status", 20, 190);
+doc.text(":", 55, 190);
+doc.text(order.order_status || "-", 65, 190);
 
-  // ======================================
-  // SEAL
-  // ======================================
+doc.line(20, 200, 190, 200);
 
-  doc.setDrawColor(99, 102, 241);
 
-  doc.setFillColor(99, 102, 241);
+// ======================================
+// FULL ADDRESS
+// ======================================
 
-  doc.circle(165, 220, 18, "FD");
+doc.setFont("helvetica", "bold");
 
-  doc.setFontSize(10);
+doc.text("Shipping Address", 110, 215);
 
-  doc.setTextColor(255, 255, 255);
+doc.line(110, 220, 190, 220);
 
-  doc.text(
-    "PAID",
-    158,
-    223
-  );
+doc.setFont("helvetica", "normal");
 
-  // ======================================
-  // FOOTER
-  // ======================================
+const address = [
+  order.address_line,
+  order.village,
+  order.taluk,
+  order.district,
+  order.state
+].filter(Boolean).join("\n");
 
-  doc.setTextColor(120);
+doc.text(
+  address,
+  110,
+  228,
+  {
+    maxWidth: 70
+  }
+);
 
-  doc.setFontSize(11);
+// ======================================
+// DATE
+// ======================================
 
-  doc.text(
-    "Thank you for shopping with ShopEase ❤️",
-    55,
-    270
-  );
+doc.line(20, 270, 191, 270);
 
-  doc.text(
-    "This is a computer generated invoice.",
-    52,
-    278
-  );
+doc.setFont("helvetica", "bold");
 
-  // ======================================
-  // SAVE PDF
-  // ======================================
+doc.text(
+  `Order Date: ${new Date(
+    order.created_at
+  ).toLocaleString()}`,
+  20,
+  270
+);
+// ======================================
+// SEAL
+// ======================================
+doc.line(20, 255, 70, 255);
 
-  doc.save(`ShopEase_Invoice_${order.id}.pdf`);
+doc.text(
+  "Authorized Signature",
+  20,
+  262
+);
 
+doc.circle(160, 258, 12);
+doc.setFontSize(8);
+
+doc.text("SHOPEASE", 152, 273);
+doc.text("OFFICIAL", 154, 277);
+ // ======================================
+ // FOOTER
+// ======================================
+
+doc.line(20, 270, 190, 270);
+
+doc.setFontSize(10);
+
+doc.text(
+  "Thank you for shopping with ShopEase",
+  20,
+  278
+);
+
+doc.text(
+  "This is a computer generated invoice.",
+  20,
+  284
+);
+
+  doc.save(`${invoiceNumber}.pdf`);
 };
 
   return (
@@ -304,6 +357,7 @@ ${order.state}
               {new Date(order.created_at)
                 .toLocaleString()}
             </p>
+            
             
       {order.order_status === "Delivered" ? (
 

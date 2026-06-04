@@ -152,6 +152,8 @@ const addressKey = user?.email
            await axios.post(
             "http://localhost:5000/api/orders/save",
             {
+              product_id: product.id,
+              quantity: product.quantity,
               user_email: user.email,
               product_name: product.name,
               product_image: product.image,
@@ -172,6 +174,13 @@ const addressKey = user?.email
               address_line: address.addressLine
             }
           );
+
+            await axios.put(
+           `http://localhost:5000/api/products/reduce-stock/${product.id}`,
+             {
+             quantity: product.quantity
+              }
+           );
 
             const updatedCart = cart.filter(
               (item) => item.id !== product.id
@@ -323,40 +332,46 @@ const addressKey = user?.email
               <p style={styles.qtyText}>
                 Quantity: {product.quantity}
               </p>
+
+              <p style={{ color: product.stock <= 5 ? "red" : "green" }}>
+                Stock Left: {product.stock}
+              </p>
+
             </div>
 
             <div style={styles.buttons}>
 
-              <button
-                style={styles.buyBtn}
-               onClick={() => {
+                        <button
+              style={{
+                ...styles.buyBtn,
+                opacity: product.stock === 0 ? 0.5 : 1,
+                cursor: product.stock === 0 ? "not-allowed" : "pointer"
+              }}
+              disabled={product.stock === 0}
+              onClick={() => {
 
-                  // ✅ ADDRESS EXISTS
-                  if (
-                    address.fullName &&
-                    address.phone &&
-                    address.state &&
-                    address.addressLine
-                  ) {
+                if (product.stock === 0) return; // extra safety
 
-                    handlePayment(product);
+                // ✅ ADDRESS EXISTS
+                if (
+                  address.fullName &&
+                  address.phone &&
+                  address.state &&
+                  address.addressLine
+                ) {
+                  handlePayment(product);
+                }
 
-                  }
+                // ✅ NEW USER
+                else {
+                  setSelectedProduct(product);
+                  setShowAddressForm(true);
+                }
 
-                  // ✅ NEW USER
-                  else {
-
-                    setSelectedProduct(product);
-
-                    setShowAddressForm(true);
-
-                  }
-
-                }}
-              >
-                Buy Now
-              </button>
-
+              }}
+            >
+              {product.stock === 0 ? "Out of Stock" : "Buy Now"}
+            </button>
               <button
                 style={styles.removeBtn}
                 onClick={() => removeFromCart(product.id)}

@@ -122,45 +122,86 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+
     background:
-      "linear-gradient(135deg,#eef2ff,#f5f3ff)"
+      "radial-gradient(circle at top, #1e1b4b, #0f172a, #020617)",
+
+    padding: "20px"
   },
 
   box: {
-    width: "400px",
-    background: "#fff",
+    width: "380px",
+
+    background: "rgba(255,255,255,0.08)",
+    backdropFilter: "blur(18px)",
+
+    border: "1px solid rgba(255,255,255,0.12)",
+
     padding: "40px",
-    borderRadius: "25px",
+    borderRadius: "20px",
+
     boxShadow:
-      "0 15px 40px rgba(0,0,0,0.1)"
+      "0 20px 60px rgba(0,0,0,0.35)",
+
+    color: "#fff"
   },
 
   title: {
     textAlign: "center",
-    marginBottom: "30px"
+    marginBottom: "28px",
+
+    fontSize: "24px",
+    fontWeight: "800",
+
+    background:
+      "linear-gradient(90deg,#fff,#a5b4fc,#f9a8d4)",
+
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent"
   },
 
   input: {
     width: "100%",
-    padding: "15px",
-    marginBottom: "20px",
+
+    padding: "14px 16px",
+    marginBottom: "14px",
+
     borderRadius: "14px",
-    border: "1px solid #ddd",
+
+    border: "1px solid rgba(255,255,255,0.12)",
+
+    background: "rgba(2,6,23,0.6)",
+    color: "#fff",
+
     outline: "none",
-    boxSizing: "border-box"
+    fontSize: "14px",
+
+    boxShadow: "inset 0 0 10px rgba(0,0,0,0.4)",
+
+    transition: "0.2s ease"
   },
 
   button: {
     width: "100%",
-    padding: "15px",
-    border: "none",
+    padding: "14px",
+
     borderRadius: "14px",
-    background: "#111827",
+    border: "none",
+
+    marginTop: "10px",
+
+    background:
+      "linear-gradient(135deg,#6366f1,#a855f7,#ec4899)",
+
     color: "#fff",
     fontWeight: "700",
-    cursor: "pointer"
+
+    cursor: "pointer",
+
+    boxShadow:
+      "0 10px 30px rgba(168,85,247,0.35)",
+
+    transition: "0.25s ease"
   }
-
 };
-
 export default ResetPassword;

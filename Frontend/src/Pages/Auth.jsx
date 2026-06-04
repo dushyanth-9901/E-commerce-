@@ -1,590 +1,327 @@
 // 📁 src/pages/Auth.jsx
 
-// =====================================================
-// 🔥 IMPORT REACT HOOKS
-// =====================================================
 import { useState } from "react";
-
-
-
-// =====================================================
-// 🔥 IMPORT REACT ROUTER
-// =====================================================
 import { useNavigate } from "react-router-dom";
-
-
-
-// =====================================================
-// 🔥 IMPORT AXIOS
-// =====================================================
 import axios from "axios";
-
-
-
-
 
 function Auth() {
 
-  // =====================================================
-  // 🔥 LOGIN / REGISTER TOGGLE
-  // false = REGISTER
-  // true = LOGIN
-  // =====================================================
-  const [isLogin, setIsLogin] =
-    useState(false);
+  const [isLogin, setIsLogin] = useState(false);
 
-
-
-
-  // =====================================================
-  // 🔥 FORM STATE
-  // =====================================================
   const [form, setForm] = useState({
-
     name: "",
     email: "",
     password: ""
-
   });
 
+  const [showPassword, setShowPassword] = useState(false);
 
-
-
-  // =====================================================
-  // 🔥 NAVIGATION
-  // =====================================================
   const navigate = useNavigate();
 
-
-
-
-
-  // =====================================================
-  // 🔥 HANDLE LOGIN & REGISTER
-  // =====================================================
   const handleSubmit = async () => {
 
     try {
 
-      // =====================================================
-      // 🔐 LOGIN LOGIC
-      // =====================================================
       if (isLogin) {
 
-        // 🔥 LOGIN API
         const res = await axios.post(
-
           "http://localhost:5000/api/auth/login",
-
           {
             email: form.email,
             password: form.password
           }
-
         );
 
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        localStorage.setItem("isLoggedIn", "true");
 
-
-        // =====================================================
-        // 🔥 SAVE JWT TOKEN
-        // =====================================================
-        localStorage.setItem(
-          "token",
-          res.data.token
-        );
-
-
-
-        // =====================================================
-        // 🔥 SAVE USER DATA
-        // =====================================================
-        localStorage.setItem(
-
-          "user",
-
-          JSON.stringify(res.data.user)
-
-        );
-
-
-
-        // =====================================================
-        // 🔥 LOGIN STATUS
-        // =====================================================
-        localStorage.setItem(
-          "isLoggedIn",
-          "true"
-        );
-
-
-
-        // =====================================================
-        // ✅ SUCCESS MESSAGE
-        // =====================================================
         alert("Login Successful ✅");
-
-
-
-        // =====================================================
-        // 🔥 REDIRECT TO DASHBOARD
-        // =====================================================
         navigate("/dashboard");
 
-      }
+      } else {
 
-
-
-
-
-
-
-      // =====================================================
-      // 📝 REGISTER LOGIC
-      // =====================================================
-      else {
-
-        // =====================================================
-        // ❌ EMPTY FIELD VALIDATION
-        // =====================================================
-        if (
-
-          !form.name ||
-          !form.email ||
-          !form.password
-
-        ) {
-
+        if (!form.name || !form.email || !form.password) {
           alert("Please fill all fields");
-
           return;
-
         }
 
-
-
-        // =====================================================
-        // 🔥 REGISTER API
-        // =====================================================
         await axios.post(
-
           "http://localhost:5000/api/auth/register",
-
           {
             name: form.name,
             email: form.email,
             password: form.password
           }
-
         );
 
+        alert("Registered Successfully ✅");
 
-
-        // =====================================================
-        // ✅ SUCCESS MESSAGE
-        // =====================================================
-        alert(
-          "Registered Successfully ✅"
-        );
-
-
-
-        // =====================================================
-        // 🔥 CLEAR FORM
-        // =====================================================
         setForm({
-
           name: "",
           email: "",
           password: ""
-
         });
 
-
-
-        // =====================================================
-        // 🔥 SWITCH TO LOGIN PAGE
-        // =====================================================
         setIsLogin(true);
-
       }
 
     } catch (error) {
-
       console.log(error);
-
-
-
-      // =====================================================
-      // ❌ ERROR MESSAGE
-      // =====================================================
-      alert(
-
-        error.response?.data?.message
-        || "Something went wrong"
-
-      );
-
+      alert(error.response?.data?.message || "Something went wrong");
     }
-
   };
 
+ return (
+  <div style={styles.page}>
 
+    {/* LEFT SIDE BRAND */}
+    <div style={styles.left}>
+      <h1 style={styles.brandTitle}>ShopEase 🚀</h1>
+      <p style={styles.brandText}>
+        Buy smart. Live better.
+      </p>
+      <div style={styles.glow}></div>
+    </div>
 
+    {/* RIGHT SIDE FORM */}
+    <div style={styles.right}>
 
+      <div style={styles.card}>
 
-
-
-
-  // =====================================================
-  // 🎨 UI
-  // =====================================================
-  return (
-
-    <div style={styles.container}>
-
-
-      {/* =====================================================
-          🔥 AUTH BOX
-      ===================================================== */}
-      <div style={styles.box}>
-
-
-        {/* =====================================================
-            🔥 TITLE
-        ===================================================== */}
         <h2 style={styles.title}>
-
-          {isLogin
-            ? "Welcome Back 👋"
-            : "Create Account 🚀"}
-
+          {isLogin ? "Welcome Back 👋" : "Create Account ✨"}
         </h2>
 
+        <p style={styles.subtitle}>
+          {isLogin
+            ? "Login to continue shopping"
+            : "Join us and start shopping"}
+        </p>
 
-
-
-
-
-
-        {/* =====================================================
-            🔥 NAME INPUT
-            ONLY FOR REGISTER
-        ===================================================== */}
         {!isLogin && (
-
           <input
             type="text"
-            placeholder="Enter Name"
+            placeholder="Full Name"
             value={form.name}
             onChange={(e) =>
+              setForm({ ...form, name: e.target.value })
+            }
+            style={styles.input}
+          />
+        )}
 
-              setForm({
+        <input
+          type="email"
+          placeholder="Email Address"
+          value={form.email}
+          onChange={(e) =>
+            setForm({ ...form, email: e.target.value })
+          }
+          style={styles.input}
+        />
 
-                ...form,
-                name: e.target.value
-
-              })
-
+        {/* PASSWORD */}
+        <div style={styles.passwordBox}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={form.password}
+            onChange={(e) =>
+              setForm({ ...form, password: e.target.value })
             }
             style={styles.input}
           />
 
-        )}
+          <span
+            style={styles.eye}
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? "🙈" : "👁️"}
+          </span>
+        </div>
 
+        <p
+          style={styles.forgot}
+          onClick={() => navigate("/reset-password")}
+        >
+          Forgot password?
+        </p>
 
-
-
-
-
-
-
-        {/* =====================================================
-            🔥 EMAIL INPUT
-        ===================================================== */}
-        <input
-          type="email"
-          placeholder="Enter Email"
-          value={form.email}
-          onChange={(e) =>
-
-            setForm({
-
-              ...form,
-              email: e.target.value
-
-            })
-
-          }
-          style={styles.input}
-        />
-
-
-
-
-
-
-
-
-        {/* =====================================================
-            🔥 PASSWORD INPUT
-        ===================================================== */}
-        <input
-          type="password"
-          placeholder="Enter Password"
-          value={form.password}
-          onChange={(e) =>
-
-            setForm({
-
-              ...form,
-              password: e.target.value
-
-            })
-
-          }
-          style={styles.input}
-        />
-
-       <p
-        style={styles.forgotText}
-        onClick={() =>
-          navigate("/reset-password")
-        }
-      >
-        Forgot Password?
-      </p>
-
-
-
-
-
-
-        {/* =====================================================
-            🔥 LOGIN / REGISTER BUTTON
-        ===================================================== */}
         <button
           style={styles.button}
           onClick={handleSubmit}
         >
-
-          {isLogin
-            ? "Login"
-            : "Register"}
-
+          {isLogin ? "Login" : "Create Account"}
         </button>
 
-
-
-
-
-
-
-
-        {/* =====================================================
-            🔥 SWITCH LOGIN / REGISTER
-        ===================================================== */}
-        <p style={styles.switchText}>
-
+        <p style={styles.switch}>
           {isLogin
             ? "Don't have an account?"
             : "Already have an account?"}
 
           <span
             style={styles.link}
-            onClick={() =>
-              setIsLogin(!isLogin)
-            }
+            onClick={() => setIsLogin(!isLogin)}
           >
-
-            {isLogin
-              ? " Register"
-              : " Login"}
-
+            {isLogin ? " Register" : " Login"}
           </span>
-
         </p>
 
-
-
-
-
-
-
-
-        {/* =====================================================
-            🔥 DIVIDER
-        ===================================================== */}
-        <hr
-          style={{
-            margin: "20px 0",
-            opacity: 0.3
-          }}
-        />
-
-
-
-
-
-
-
-
-        {/* =====================================================
-            👨‍💼 ADMIN LOGIN BUTTON
-        ===================================================== */}
         <button
-          style={styles.adminBtn}
-          onClick={() =>
-            navigate("/admin")
-          }
+          style={styles.admin}
+          onClick={() => navigate("/admin")}
         >
-
-          Login as Admin
-
+          Admin Login
         </button>
 
       </div>
 
     </div>
 
-  );
-
+  </div>
+);
 }
 
-
-
-
-
-
-
-
-// =====================================================
-// 🎨 STYLES
-// =====================================================
+// 🎨 MODERN UI STYLES
 const styles = {
 
-  // =====================================================
-  // 🔥 PAGE CONTAINER
-  // =====================================================
-  container: {
+  page: {
+    height: "100vh",
+    display: "flex",
+    fontFamily: "sans-serif",
+    background: "radial-gradient(circle at top,#0f172a,#020617)"
+  },
+
+  left: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    padding: "80px",
+    color: "#fff",
+    position: "relative"
+  },
+
+  brandTitle: {
+    fontSize: "52px",
+    fontWeight: "900",
+    marginBottom: "10px"
+  },
+
+  brandText: {
+    fontSize: "18px",
+    opacity: 0.7
+  },
+
+  glow: {
+    position: "absolute",
+    width: "300px",
+    height: "300px",
+    background: "#6366f1",
+    filter: "blur(120px)",
+    top: "30%",
+    left: "20%",
+    opacity: 0.4
+  },
+
+  right: {
+    flex: 1,
     display: "flex",
     justifyContent: "center",
-    alignItems: "center",
-    height: "100vh",
-    background:
-      "linear-gradient(135deg, #667eea, #764ba2)"
+    alignItems: "center"
   },
 
-
-
-  // =====================================================
-  // 🔥 AUTH BOX
-  // =====================================================
-  box: {
-    background: "#fff",
-    padding: "40px 30px",
-    borderRadius: "15px",
-    width: "320px",
+  card: {
+    width: "380px",
+    padding: "40px",
+    borderRadius: "20px",
+    background: "rgba(255,255,255,0.06)",
+    backdropFilter: "blur(20px)",
+    boxShadow: "0 30px 80px rgba(0,0,0,0.6)",
+    color: "#fff",
     textAlign: "center",
-    boxShadow:
-      "0 10px 30px rgba(0,0,0,0.2)"
+    border: "1px solid rgba(255,255,255,0.1)"
   },
 
-
-
-  // =====================================================
-  // 🔥 TITLE
-  // =====================================================
   title: {
-    marginBottom: "20px",
-    fontWeight: "bold",
-    color: "#333"
+    fontSize: "28px",
+    fontWeight: "800"
   },
 
+  subtitle: {
+    fontSize: "14px",
+    opacity: 0.7,
+    marginBottom: "20px"
+  },
 
-
-  // =====================================================
-  // 🔥 INPUT FIELD
-  // =====================================================
   input: {
-    width: "90%",
-    padding: "12px",
+    width: "100%",
+    padding: "14px",
     margin: "10px 0",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
+    borderRadius: "12px",
+    border: "1px solid rgba(255,255,255,0.15)",
+    background: "rgba(255,255,255,0.05)",
+    color: "#fff",
     outline: "none",
-    fontSize: "14px"
+    boxSizing: "border-box",
+    transition: "0.3s"
   },
 
+  passwordBox: {
+    position: "relative"
+  },
 
-
-  // =====================================================
-  // 🔥 MAIN BUTTON
-  // =====================================================
-  button: {
-    width: "100%",
-    padding: "12px",
-    marginTop: "10px",
-    borderRadius: "8px",
-    background:
-      "linear-gradient(135deg, #667eea, #764ba2)",
-    color: "white",
-    border: "none",
-    fontWeight: "bold",
+  eye: {
+    position: "absolute",
+    right: "12px",
+    top: "50%",
+    transform: "translateY(-50%)",
     cursor: "pointer"
   },
 
+  button: {
+    width: "100%",
+    padding: "14px",
+    marginTop: "10px",
+    borderRadius: "12px",
+    border: "none",
+    fontWeight: "700",
+    color: "#fff",
+    cursor: "pointer",
+    background: "linear-gradient(135deg,#6366f1,#3b82f6)",
+    transition: "0.3s"
+  },
 
-
-  // =====================================================
-  // 🔥 SWITCH TEXT
-  // =====================================================
-  switchText: {
+  switch: {
     marginTop: "15px",
     fontSize: "14px",
-    color: "#555"
+    opacity: 0.8
   },
 
-
-
-  // =====================================================
-  // 🔥 LOGIN / REGISTER LINK
-  // =====================================================
   link: {
-    color: "#667eea",
+    color: "#60a5fa",
     cursor: "pointer",
     fontWeight: "bold"
   },
 
+  forgot: {
+    fontSize: "13px",
+    textAlign: "right",
+    cursor: "pointer",
+    color: "#93c5fd"
+  },
 
-
-  // =====================================================
-  // 🔥 ADMIN BUTTON
-  // =====================================================
-  adminBtn: {
+  admin: {
+    marginTop: "15px",
     width: "100%",
-    padding: "10px",
-    borderRadius: "8px",
-    background: "#4faab5",
+    padding: "12px",
+    borderRadius: "12px",
+    background: "rgba(255,255,255,0.08)",
     color: "#fff",
-    border: "none",
-    cursor: "pointer",
-    fontWeight: "bold"
-  },
-  forgotText: {
-  color: "#6c63ff",
-  cursor: "pointer",
-  marginTop: "10px",
-  fontSize: "14px",
-  textAlign: "right",
-  fontWeight: "600"
-},
-
+    border: "1px solid rgba(255,255,255,0.15)",
+    cursor: "pointer"
+  }
 };
 
-
-
-
-// =====================================================
-// 🔥 EXPORT COMPONENT
-// =====================================================
 export default Auth;
