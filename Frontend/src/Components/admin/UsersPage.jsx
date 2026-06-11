@@ -1,13 +1,15 @@
-function UsersPage({
 
+
+function UsersPage({
   users,
   styles,
 
   userSearch,
-  setUserSearch
+  setUserSearch,
+
+  deleteUser
 
 }) {
-
   // =====================================================
   // 🔥 TODAY USERS
   // =====================================================
@@ -119,6 +121,10 @@ function UsersPage({
                 Joined
               </th>
 
+              <th style={styles.th}>
+                Delete
+              </th>
+
             </tr>
 
           </thead>
@@ -151,26 +157,52 @@ function UsersPage({
 
               .map((user) => (
 
-              <tr key={user.id}>
+             <tr key={user.id}>
 
-                <td style={styles.td}>
-                  {user.name}
-                </td>
+              <td style={styles.td}>
+                {user.name}
+              </td>
 
-                <td style={styles.td}>
-                  {user.email}
-                </td>
+              <td style={styles.td}>
+                {user.email}
+              </td>
 
-                <td style={styles.td}>
+              <td style={styles.td}>
+                {user.created_at?.split("T")[0]}
+              </td>
 
-                  {
-                    user.created_at
-                      ?.split("T")[0]
-                  }
+              <td style={styles.td}>
 
-                </td>
+                <button
 
-              </tr>
+                  onClick={() => {
+
+                    const confirmDelete = window.confirm(
+                      `Are you sure you want to delete ${user.name}?`
+                    );
+
+                    if (confirmDelete) {
+
+                      deleteUser(user.email);
+
+                    }
+
+                  }}
+
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                    fontSize: "20px"
+                  }}
+
+                >
+                  🗑️
+                </button>
+
+              </td>
+
+            </tr>
 
             ))}
 

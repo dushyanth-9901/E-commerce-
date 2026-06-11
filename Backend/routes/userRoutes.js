@@ -62,5 +62,44 @@ router.get("/", (req, res) => {
   });
 
 });
+// DELETE USER COMPLETELY
+router.delete("/:email", (req, res) => {
+
+  const { email } = req.params;
+
+  // Delete Orders First
+  db.query(
+    "DELETE FROM orders WHERE user_email = ?",
+    [email],
+    (err) => {
+
+      if (err) {
+        console.log(err);
+        return res.status(500).json(err);
+      }
+
+      // Delete User
+      db.query(
+        "DELETE FROM users WHERE email = ?",
+        [email],
+        (err2) => {
+
+          if (err2) {
+            console.log(err2);
+            return res.status(500).json(err2);
+          }
+
+          res.json({
+            success: true,
+            message: "User Deleted Successfully"
+          });
+
+        }
+      );
+
+    }
+  );
+
+});
 
 module.exports = router;

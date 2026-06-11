@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 
 import axios from "axios";
 
+import { FaTrash } from "react-icons/fa";
+
 import Sidebar from "../components/admin/Sidebar";
 import DashboardHome from "../components/admin/DashboardHome";
 import ProductsPage from "../components/admin/ProductsPage";
@@ -530,6 +532,33 @@ const monthSales =
   }
 
 };
+const deleteUser = async (email) => {
+
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this user permanently?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+
+    await axios.delete(
+      `http://localhost:5000/api/users/${email}`
+    );
+
+    alert("User Deleted Successfully");
+
+     fetchData();
+
+  } catch (error) {
+
+    console.log(error);
+
+    alert("Delete Failed");
+
+  }
+
+};
 
   // =====================================================
   // 🔥 RETURN
@@ -655,7 +684,7 @@ const monthSales =
 
       userSearch={userSearch}
       setUserSearch={setUserSearch}
-
+      deleteUser={deleteUser}
 />
 
         )}

@@ -45,11 +45,188 @@ const addressKey = user?.email
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showCouponModal, setShowCouponModal] = useState(false);
+  const [checkoutType, setCheckoutType] = useState("single");
+  const [paymentMethod, setPaymentMethod] = useState("Razorpay");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const [couponCode, setCouponCode] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponError, setCouponError] = useState("");
+
+  const calculateBaseAmount = (items) =>
+    items.reduce((total, item) => total + item.price * item.quantity, 0);
+
+  const calculateFinalAmount = (amount) =>
+    Math.round(amount - (amount * couponDiscount) / 100);
+
+  const saveOrderItem = async (product, paymentInfo) => {
+    try {
+      if (!product.id) {
+        throw new Error("Product ID is missing");
+      }
+
+      const response = await axios.post("http://localhost:5000/api/orders/save", {
+        product_id: product.id,
+        quantity: product.quantity,
+        user_email: user.email,
+        product_name: product.name,
+        product_image: product.image,
+        amount: paymentInfo.amount,
+        base_amount: product.price * product.quantity,
+        discount: couponDiscount,
+        coupon_code: couponApplied ? couponCode : null,
+        payment_id: paymentInfo.payment_id || null,
+        payment_method: paymentInfo.payment_method,
+        payment_status: paymentInfo.payment_status,
+        full_name: address.fullName,
+        phone: address.phone,
+        state: address.state,
+        district: address.district,
+        taluk: address.taluk,
+        village: address.village,
+        pincode: address.pincode,
+        address_line: address.addressLine
+      });
+
+      if (!response.data) {
+        throw new Error("No response from server");
+      }
+
+      // Reduce stock after successful order save
+      await axios.put(
+        `http://localhost:5000/api/products/reduce-stock/${product.id}`,
+        {
+          quantity: product.quantity
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Order save error:", error.response?.data || error.message);
+      throw error;
+    }
+  };
+
+  const saveAllOrders = async (items, paymentInfo) => {
+    const errors = [];
+    for (const product of items) {
+      try {
+        await saveOrderItem(product, {
+          ...paymentInfo,
+          amount: calculateFinalAmount(product.price * product.quantity)
+        });
+      } catch (error) {
+        errors.push(`${product.name}: ${error.message}`);
+        console.error(`Failed to save order for ${product.name}:`, error);
+      }
+    }
+    
+    if (errors.length > 0) {
+      const errorMsg = errors.join("; ");
+      throw new Error(`Order save failed for: ${errorMsg}`);
+    }
+  };
+
+  const handleCODPayment = async (items) => {
+    setIsProcessing(true);
+
+    try {
+      await saveAllOrders(items, {
+        payment_id: null,
+        payment_method: "Cash on Delivery",
+        payment_status: "Pending"
+      });
+
+      const updatedCart = cart.filter((item) => !items.some((product) => product.id === item.id));
+      setCart(updatedCart);
+      localStorage.setItem(cartKey, JSON.stringify(updatedCart));
+      setShowSuccessPopup(true);
+      setShowCouponModal(false);
+
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 2500);
+    } catch (error) {
+      console.error("COD Payment Error:", error);
+      alert(`Order Save Failed: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const processPayment = async (items) => {
+    if (paymentMethod === "Cash on Delivery") {
+      return handleCODPayment(items);
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const amount = calculateFinalAmount(calculateBaseAmount(items));
+      const res = await axios.post("http://localhost:5000/api/payment/create-order", {
+        amount
+      });
+
+      const options = {
+        key: "rzp_test_SsfWvZhtYI6dCX",
+        amount: res.data.amount,
+        currency: "INR",
+        name: "ShopEase",
+        description: checkoutType === "cart" ? "Cart Checkout" : items[0]?.name,
+        order_id: res.data.id,
+        handler: async function (response) {
+          try {
+            await saveAllOrders(items, {
+              payment_id: response.razorpay_payment_id,
+              payment_method: "Razorpay",
+              payment_status: "Paid"
+            });
+
+            const updatedCart = cart.filter((item) => !items.some((product) => product.id === item.id));
+            setCart(updatedCart);
+            localStorage.setItem(cartKey, JSON.stringify(updatedCart));
+            setShowSuccessPopup(true);
+            setShowCouponModal(false);
+
+            setTimeout(() => {
+              navigate("/dashboard");
+            }, 2500);
+          } catch (error) {
+            console.error("Razorpay Handler Error:", error);
+            alert(`Order Save Failed: ${error.message}`);
+          }
+        },
+        theme: {
+          color: "#111"
+        }
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.log(error);
+      alert("Payment Failed ❌");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const openCheckout = (product, type) => {
+    setCheckoutType(type);
+    setSelectedProduct(product || null);
+    setPaymentMethod("Razorpay");
+    setShowCouponModal(true);
+  };
+
+  const openSavedAddressCheckout = () => {
+    setCheckoutType("cart");
+    setSelectedProduct(null);
+    setPaymentMethod("Razorpay");
+    setShowCouponModal(true);
+  };
+
+  const currentItems = checkoutType === "cart" ? cart : selectedProduct ? [selectedProduct] : [];
 
   // =====================================================
   // 🔥 LOAD SAVED ADDRESS (FIXED)
@@ -157,134 +334,10 @@ const addressKey = user?.email
   // =====================================================
   // 💳 HANDLE PAYMENT
   // =====================================================
-  const handlePayment = async (product) => {
-
-    try {
-
-      if (
-        !address.fullName ||
-        !address.phone ||
-        !address.state ||
-        !address.district ||
-        !address.taluk ||
-        !address.village ||
-        !address.pincode ||
-        !address.addressLine
-      ) {
-        alert("Please Fill Delivery Address");
-        return;
-      }
-
-      const baseAmount = product.price * product.quantity;
-      const discountAmount = (baseAmount * couponDiscount) / 100;
-      const finalAmount = baseAmount - discountAmount;
-
-      const res = await axios.post(
-        "http://localhost:5000/api/payment/create-order",
-        {
-          amount: Math.round(finalAmount)
-        }
-      );
-
-      const options = {
-        key: "rzp_test_SsfWvZhtYI6dCX",
-        amount: res.data.amount,
-        currency: "INR",
-        name: "ShopEase",
-        description: product.name,
-        order_id: res.data.id,
-
-        handler: async function (response) {
-
-          try {
-
-            const user = JSON.parse(localStorage.getItem("user"));
-
-           const baseAmount = product.price * product.quantity;
-            const discountAmount = (baseAmount * couponDiscount) / 100;
-            const finalAmount = baseAmount - discountAmount;
-
-            await axios.post(
-            "http://localhost:5000/api/orders/save",
-            {
-              product_id: product.id,
-              quantity: product.quantity,
-              user_email: user.email,
-              product_name: product.name,
-              product_image: product.image,
-              amount: Math.round(finalAmount),
-              base_amount: baseAmount,
-              discount: couponDiscount,
-              coupon_code: couponApplied ? couponCode : null,
-
-              payment_id: response.razorpay_payment_id,
-
-              payment_method: "Razorpay",
-              payment_status: "Paid",
-
-              full_name: address.fullName,
-              phone: address.phone,
-              state: address.state,
-              district: address.district,
-              taluk: address.taluk,
-              village: address.village,
-              pincode: address.pincode,
-              address_line: address.addressLine
-            }
-          );
-
-            await axios.put(
-           `http://localhost:5000/api/products/reduce-stock/${product.id}`,
-             {
-             quantity: product.quantity
-              }
-           );
-
-            const updatedCart = cart.filter(
-              (item) => item.id !== product.id
-            );
-
-            setCart(updatedCart);
-
-            localStorage.setItem(
-              cartKey,
-              JSON.stringify(updatedCart)
-            );
-
-            setShowSuccessPopup(true);
-
-          setTimeout(() => {
-
-            navigate("/dashboard");
-
-          }, 2500);
-            
-
-          } catch (error) {
-            console.log(error);
-            alert("Order Save Failed");
-          }
-        },
-
-        theme: {
-          color: "#111"
-        }
-      };
-
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
-
-    } catch (error) {
-      console.log(error);
-      alert("Payment Failed ❌");
-    }
-  };
-
   // =====================================================
   // 🔥 SAVE ADDRESS
   // =====================================================
-  const saveAddressAndContinue = () => {
-
+  const saveAddressAndContinue = async () => {
     if (
       !address.fullName ||
       !address.phone ||
@@ -299,33 +352,30 @@ const addressKey = user?.email
       return;
     }
 
-    localStorage.setItem(
-    addressKey,
-    JSON.stringify(address)
-     );
+    localStorage.setItem(addressKey, JSON.stringify(address));
 
-     axios.put(
+    try {
+      await axios.put("http://localhost:5000/api/auth/save-address", {
+        email: user.email,
+        fullName: address.fullName,
+        phone: address.phone,
+        state: address.state,
+        district: address.district,
+        taluk: address.taluk,
+        village: address.village,
+        pincode: address.pincode,
+        addressLine: address.addressLine
+      });
+    } catch (error) {
+      console.log(error);
+      alert("Unable to save address. Please try again.");
+      return;
+    }
 
-  "http://localhost:5000/api/auth/save-address",
-
-  {
-
-    email: user.email,
-
-    fullName: address.fullName,
-    phone: address.phone,
-    state: address.state,
-    district: address.district,
-    taluk: address.taluk,
-    village: address.village,
-    pincode: address.pincode,
-    addressLine: address.addressLine
-
-  }
-
-);
     setShowAddressForm(false);
-    handlePayment(selectedProduct);
+
+    const itemsToBuy = checkoutType === "cart" ? cart : [selectedProduct];
+    processPayment(itemsToBuy);
   };
 
   // =====================================================
@@ -336,9 +386,42 @@ const addressKey = user?.email
     <div style={styles.container}>
 
       <h1 style={styles.heading}>My Cart 🛒</h1>
-        {address.fullName && (
 
-                  <div style={styles.savedAddressBox}>
+      {cart.length > 0 && (
+        <div style={styles.cartTopBar}>
+          <div>
+            <p style={styles.cartSummaryText}>
+              Total Items: {cart.length}
+            </p>
+            <p style={styles.cartSummaryText}>
+              Total Amount: ₹{calculateFinalAmount(calculateBaseAmount(cart))}
+            </p>
+          </div>
+          <button
+            style={styles.checkoutBtn}
+            disabled={isProcessing || cart.length === 0}
+            onClick={() => {
+              if (
+                address.fullName &&
+                address.phone &&
+                address.state &&
+                address.addressLine
+              ) {
+                openCheckout(null, "cart");
+              } else {
+                setCheckoutType("cart");
+                setShowAddressForm(true);
+              }
+            }}
+          >
+            Checkout Cart
+          </button>
+        </div>
+      )}
+
+      {address.fullName && (
+
+        <div style={styles.savedAddressBox}>
 
                     <div>
 
@@ -365,15 +448,22 @@ const addressKey = user?.email
 
                     </div>
 
-                    <button
-                      style={styles.editAddressBtn}
-                      onClick={() =>
-                        setShowAddressForm(true)
-                      }
-                    >
-                      Edit Address
-                    </button>
-
+                    <div style={styles.savedAddressActions}>
+                      <button
+                        style={styles.addressActionBtn}
+                        onClick={() =>
+                          setShowAddressForm(true)
+                        }
+                      >
+                        Edit Address
+                      </button>
+                      <button
+                        style={styles.proceedAddressBtn}
+                        onClick={openSavedAddressCheckout}
+                      >
+                        Proceed with this Address
+                      </button>
+                    </div>
                   </div>
 
                 )}
@@ -420,22 +510,18 @@ const addressKey = user?.email
               }}
               disabled={product.stock === 0}
               onClick={() => {
-
                 if (product.stock === 0) return; // extra safety
 
-                // ✅ ADDRESS EXISTS
-                if (
+                const hasAddress =
                   address.fullName &&
                   address.phone &&
                   address.state &&
-                  address.addressLine
-                ) {
-                  setSelectedProduct(product);
-                  setShowCouponModal(true);
-                }
+                  address.addressLine;
 
-                // ✅ NEW USER
-                else {
+                if (hasAddress) {
+                  openCheckout(product, "single");
+                } else {
+                  setCheckoutType("single");
                   setSelectedProduct(product);
                   setShowAddressForm(true);
                 }
@@ -667,10 +753,10 @@ const addressKey = user?.email
             <div style={styles.topSection}>
               <div>
                 <p style={styles.smallText}>
-                  Step 2: Review & Apply Coupon
+                  Step 2: Review Order & Payment
                 </p>
                 <h2 style={styles.popupTitle}>
-                  Have a Coupon? 🎟️
+                  Checkout Details
                 </h2>
               </div>
               <button
@@ -690,24 +776,61 @@ const addressKey = user?.email
             {/* ORDER SUMMARY */}
             <div style={styles.summaryBox}>
               <h3 style={{ marginBottom: "12px" }}>Order Summary</h3>
-              <p style={styles.summaryText}>
-                Product: {selectedProduct?.name}
-              </p>
-              <p style={styles.summaryText}>
-                Price: ₹{selectedProduct?.price}
-              </p>
-              <p style={styles.summaryText}>
-                Quantity: {selectedProduct?.quantity}
-              </p>
-              <p style={{
-                ...styles.summaryText,
-                fontSize: "16px",
-                fontWeight: "700",
-                color: "#111827",
-                marginTop: "8px"
-              }}>
-                Subtotal: ₹{selectedProduct?.price * selectedProduct?.quantity}
-              </p>
+              {checkoutType === "cart" ? (
+                <>
+                  <p style={styles.summaryText}>
+                    Items: {currentItems.length}
+                  </p>
+                  <p style={styles.summaryText}>
+                    Subtotal: ₹{calculateBaseAmount(currentItems)}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p style={styles.summaryText}>
+                    Product: {selectedProduct?.name}
+                  </p>
+                  <p style={styles.summaryText}>
+                    Price: ₹{selectedProduct?.price}
+                  </p>
+                  <p style={styles.summaryText}>
+                    Quantity: {selectedProduct?.quantity}
+                  </p>
+                  <p
+                    style={{
+                      ...styles.summaryText,
+                      fontSize: "16px",
+                      fontWeight: "700",
+                      color: "#111827",
+                      marginTop: "8px"
+                    }}
+                  >
+                    Subtotal: ₹{selectedProduct?.price * selectedProduct?.quantity}
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div style={{ marginTop: "20px" }}>
+              <div style={styles.sectionTitle}>Payment Method</div>
+              <label style={styles.paymentOption}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  checked={paymentMethod === "Razorpay"}
+                  onChange={() => setPaymentMethod("Razorpay")}
+                />
+                Razorpay
+              </label>
+              <label style={styles.paymentOption}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  checked={paymentMethod === "Cash on Delivery"}
+                  onChange={() => setPaymentMethod("Cash on Delivery")}
+                />
+                Cash on Delivery
+              </label>
             </div>
 
             {/* COUPON INPUT */}
@@ -761,12 +884,12 @@ const addressKey = user?.email
             {/* DISCOUNT PREVIEW */}
             {couponApplied && (
               <div style={styles.discountPreview}>
-                <p>Base: ₹{selectedProduct?.price * selectedProduct?.quantity}</p>
+                <p>Base: ₹{calculateBaseAmount(currentItems)}</p>
                 <p>
-                  Discount: -₹{Math.round((selectedProduct?.price * selectedProduct?.quantity * couponDiscount) / 100)}
+                  Discount: -₹{Math.round(calculateBaseAmount(currentItems) * couponDiscount / 100)}
                 </p>
                 <p style={{ fontWeight: "700", color: "#10b981" }}>
-                  Total: ₹{Math.round((selectedProduct?.price * selectedProduct?.quantity) * (1 - couponDiscount / 100))}
+                  Total: ₹{calculateFinalAmount(calculateBaseAmount(currentItems))}
                 </p>
               </div>
             )}
@@ -775,22 +898,25 @@ const addressKey = user?.email
             <div style={styles.buttonGroup}>
               <button
                 style={styles.skipBtn}
+                disabled={isProcessing}
                 onClick={() => {
                   setShowCouponModal(false);
                   removeCoupon();
-                  handlePayment(selectedProduct);
+                  processPayment(currentItems);
                 }}
               >
-                Skip & Pay Now
+                {paymentMethod === "Cash on Delivery" ? "Place Order" : "Pay Without Coupon"}
               </button>
               <button
                 style={styles.proceedBtn}
-                onClick={() => {
-                  setShowCouponModal(false);
-                  handlePayment(selectedProduct);
-                }}
+                disabled={isProcessing}
+                onClick={() => processPayment(currentItems)}
               >
-                {couponApplied ? "Proceed with Discount ✅" : "Proceed to Payment"}
+                {paymentMethod === "Cash on Delivery"
+                  ? "Confirm COD Order"
+                  : couponApplied
+                  ? "Proceed with Discount ✅"
+                  : "Proceed to Payment"}
               </button>
             </div>
           </div>
@@ -1101,39 +1227,61 @@ editAddressBtn: {
 
   fontWeight: "700"
 },
-successPopup: {
-
-  background: "#fff",
-
-  padding: "40px",
-
-  borderRadius: "20px",
-
-  textAlign: "center",
-
-  width: "400px"
-
-},
-
-successBtn: {
-
-  marginTop: "20px",
-
-  padding: "14px 24px",
-
-  border: "none",
-
-  borderRadius: "12px",
-
-  background: "#111827",
-
-  color: "#fff",
-
-  cursor: "pointer",
-
-  fontWeight: "700"
-
-},
+  savedAddressActions: {
+    display: "flex",
+    gap: "12px",
+    flexWrap: "wrap"
+  },
+  addressActionBtn: {
+    padding: "14px 24px",
+    border: "none",
+    borderRadius: "14px",
+    background: "#6b7280",
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: "700"
+  },
+  proceedAddressBtn: {
+    padding: "14px 24px",
+    border: "none",
+    borderRadius: "14px",
+    background: "#111827",
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: "700"
+  },
+  cartTopBar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "20px",
+    marginBottom: "28px",
+    flexWrap: "wrap"
+  },
+  cartSummaryText: {
+    fontSize: "16px",
+    color: "#4b5563",
+    fontWeight: "600"
+  },
+  checkoutBtn: {
+    padding: "14px 26px",
+    border: "none",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg,#2563eb,#4338ca)",
+    color: "#fff",
+    fontWeight: "700",
+    cursor: "pointer",
+    fontSize: "15px"
+  },
+  paymentOption: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    marginTop: "10px",
+    color: "#374151",
+    cursor: "pointer",
+    fontSize: "15px"
+  },
 
 successOverlay: {
 
