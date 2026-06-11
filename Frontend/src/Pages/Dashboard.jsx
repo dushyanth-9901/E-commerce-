@@ -16,6 +16,8 @@ function Dashboard({ cart, setCart }) {
 
   // 🔥 SEARCH STATE
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("Newest");
 
 
 
@@ -76,15 +78,46 @@ function Dashboard({ cart, setCart }) {
 
 
 
-  // 🔥 FILTER PRODUCTS
-  const filteredProducts =
-    products.filter((p) =>
+  const categories = [
+    "All",
+    "Electronics",
+    "Fashion",
+    "Footwear",
+    "Accessories",
+    ...Array.from(
+      new Set(
+        products
+          .map((p) => p.category)
+          .filter(Boolean)
+      )
+    )
+  ];
 
-      p.name
+  const sortedProducts = [...products]
+    .filter((p) => {
+      const matchesSearch = p.name
         ?.toLowerCase()
-        .includes(search.toLowerCase())
+        .includes(search.toLowerCase());
 
-    );
+      const matchesCategory =
+        categoryFilter === "All"
+          ? true
+          : p.category === categoryFilter;
+
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      if (sortBy === "Price Low → High") {
+        return Number(a.price) - Number(b.price);
+      }
+      if (sortBy === "Price High → Low") {
+        return Number(b.price) - Number(a.price);
+      }
+      if (sortBy === "Newest") {
+        return Number(b.id) - Number(a.id);
+      }
+      return 0;
+    });
 
 
 
@@ -165,23 +198,50 @@ function Dashboard({ cart, setCart }) {
           Explore Products 🛒
         </h1>
 
+        <div style={styles.filterRow}>
+          <p style={styles.count}>
+            {sortedProducts.length}
+            {" "}
+            Products Available
+          </p>
 
+          <div style={styles.filterGroup}>
+            <select
+              value={categoryFilter}
+              onChange={(e) =>
+                setCategoryFilter(e.target.value)
+              }
+              style={styles.categorySelect}
+            >
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
 
-        {/* 🔥 PRODUCT COUNT */}
-        <p style={styles.count}>
-          {filteredProducts.length}
-          {" "}
-          Products Available
-        </p>
-
-
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={styles.sortSelect}
+            >
+              <option value="Newest">Newest</option>
+              <option value="Price Low → High">
+                Price Low → High
+              </option>
+              <option value="Price High → Low">
+                Price High → Low
+              </option>
+            </select>
+          </div>
+        </div>
 
         {/* 🔥 PRODUCTS GRID */}
         <div style={styles.grid}>
 
-          {filteredProducts.length > 0 ? (
+          {sortedProducts.length > 0 ? (
 
-            filteredProducts.map((product) => (
+            sortedProducts.map((product) => (
 
               <ProductCard
                 key={product.id}
@@ -247,10 +307,40 @@ const styles = {
   // 🔥 PRODUCT COUNT
   count: {
     color: "#666",
-    marginBottom: "20px",
+    marginBottom: "0",
     fontSize: "16px"
   },
 
+  filterRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "15px",
+    marginBottom: "20px"
+  },
+
+  categorySelect: {
+    padding: "12px 18px",
+    borderRadius: "10px",
+    border: "1px solid #d1d5db",
+    outline: "none",
+    minWidth: "180px"
+  },
+
+  sortSelect: {
+    padding: "12px 18px",
+    borderRadius: "10px",
+    border: "1px solid #d1d5db",
+    outline: "none",
+    minWidth: "200px"
+  },
+
+  filterGroup: {
+    display: "flex",
+    gap: "14px",
+    flexWrap: "wrap"
+  },
 
 
   // 🔥 GRID

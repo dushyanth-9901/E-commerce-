@@ -49,22 +49,31 @@ function DashboardHome({
       (item) => Number(item.stock) < 5
     ).length;
 
+  const lowStockProducts =
+    products
+      .filter(
+        (item) =>
+          Number(item.stock) > 0 &&
+          Number(item.stock) < 5
+      )
+      .slice(0, 5);
+
   const deliveredOrders =
     orders.filter(
       (item) =>
-        item.status === "Delivered"
+        item.order_status === "Delivered"
     ).length;
 
   const pendingOrders =
     orders.filter(
       (item) =>
-        item.status === "Pending"
+        item.order_status === "Processing"
     ).length;
 
   const cancelledOrders =
     orders.filter(
       (item) =>
-        item.status === "Cancelled"
+        item.order_status === "Cancelled"
     ).length;
 
   const outOfStock =
@@ -72,6 +81,60 @@ function DashboardHome({
       (item) =>
         Number(item.stock) === 0
     ).length;
+
+  const topSellingProducts =
+    Object.entries(
+      orders.reduce((acc, order) => {
+        const name = order.product_name || "Unknown";
+        acc[name] = (acc[name] || 0) + 1;
+        return acc;
+      }, {})
+    )
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name, count]) => ({
+        name,
+        count
+      }));
+
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  ];
+
+  const salesData = Array.from(
+    { length: 6 },
+    (_, index) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - 5 + index);
+      return {
+        month: `${monthNames[date.getMonth()]} ${date.getFullYear()}`,
+        sales: 0
+      };
+    }
+  );
+
+  orders.forEach((order) => {
+    if (!order.created_at) return;
+    const orderDate = new Date(order.created_at);
+    const monthKey = `${monthNames[orderDate.getMonth()]} ${orderDate.getFullYear()}`;
+    const dataPoint = salesData.find(
+      (item) => item.month === monthKey
+    );
+    if (dataPoint) {
+      dataPoint.sales += Number(order.amount || 0);
+    }
+  });
 
   // =====================================================
   // 🔥 TODAY USERS
@@ -144,16 +207,6 @@ function DashboardHome({
   // =====================================================
   // 🔥 CHART DATA
   // =====================================================
-  const salesData = [
-
-    { month: "Jan", sales: 4000 },
-    { month: "Feb", sales: 3000 },
-    { month: "Mar", sales: 5000 },
-    { month: "Apr", sales: 7000 },
-    { month: "May", sales: 9000 }
-
-  ];
-
   const stockData = [
 
     {
@@ -468,6 +521,22 @@ function DashboardHome({
 
       </div>
 
+      <div style={styles.card}>
+        <h2>Top Selling Products</h2>
+        {topSellingProducts.length > 0 ? (
+          <ul style={styles.topSellingList}>
+            {topSellingProducts.map((product, index) => (
+              <li key={index} style={styles.topSellingItem}>
+                <strong>{product.name}</strong>
+                <span>{product.count} sold</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No sales data available yet.</p>
+        )}
+      </div>
+
     </>
 
   );
@@ -495,6 +564,24 @@ const styles = {
     background: "#fff",
     padding: "25px",
     borderRadius: "15px"
+  },
+
+  topSellingList: {
+    listStyle: "none",
+    padding: 0,
+    margin: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px"
+  },
+
+  topSellingItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "12px 16px",
+    background: "#f3f4f6",
+    borderRadius: "10px"
   }
 
 };

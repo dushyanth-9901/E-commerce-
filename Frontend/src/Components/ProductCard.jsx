@@ -3,8 +3,31 @@ import { useNavigate } from "react-router-dom";
 function ProductCard({ product }) {
   const navigate = useNavigate();
 
+  const reviews =
+    JSON.parse(
+      localStorage.getItem(
+        `reviews_${product.id}`
+      )
+    ) || [];
+
+  const averageRating =
+    reviews.length > 0
+      ? (
+          reviews.reduce(
+            (acc, item) =>
+              acc + Number(item.rating || 0),
+            0
+          ) / reviews.length
+        ).toFixed(1)
+      : null;
+
   const addToCart = (e) => {
     e.stopPropagation();
+
+    if (product.stock === 0) {
+      alert("This product is out of stock.");
+      return;
+    }
 
     const isLoggedIn = localStorage.getItem("isLoggedIn");
 
@@ -69,11 +92,37 @@ function ProductCard({ product }) {
 
       <h3>{product.name}</h3>
 
+      {product.category && (
+        <p style={styles.category}>
+          Category: {product.category}
+        </p>
+      )}
+
+      <p style={styles.stock}>
+        Stock: {product.stock}
+      </p>
+
+      {averageRating ? (
+        <p style={styles.rating}>
+          ⭐ {averageRating} ({reviews.length})
+        </p>
+      ) : (
+        <p style={styles.rating}>No ratings yet</p>
+      )}
+
       <p style={styles.price}>₹ {product.price}</p>
 
       <div style={styles.buttonContainer}>
-        <button style={styles.cartBtn} onClick={addToCart}>
-          Add To Cart
+        <button
+          style={{
+            ...styles.cartBtn,
+            opacity: product.stock === 0 ? 0.6 : 1,
+            cursor: product.stock === 0 ? "not-allowed" : "pointer"
+          }}
+          onClick={addToCart}
+          disabled={product.stock === 0}
+        >
+          {product.stock === 0 ? "Out of Stock" : "Add To Cart"}
         </button>
 
         <button style={styles.buyBtn} onClick={buyNow}>
@@ -104,6 +153,24 @@ const styles = {
     color: "#667eea",
     fontWeight: "bold",
     fontSize: "18px"
+  },
+
+  category: {
+    color: "#4b5563",
+    fontSize: "14px",
+    margin: "6px 0 0"
+  },
+
+  stock: {
+    color: "#16a34a",
+    fontSize: "14px",
+    margin: "6px 0 0"
+  },
+
+  rating: {
+    color: "#d97706",
+    fontSize: "14px",
+    margin: "6px 0 0"
   },
 
   buttonContainer: {

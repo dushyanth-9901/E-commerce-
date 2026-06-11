@@ -9,6 +9,26 @@ function OrderHistory() {
 
   const [orders, setOrders] = useState([]);
 
+  const cancelOrder = async (orderId, orderStatus) => {
+    if (orderStatus !== "Processing") {
+      alert("❌ Orders can only be cancelled while in Processing status");
+      return;
+    }
+    try {
+      await axios.put(
+        `http://localhost:5000/api/orders/${orderId}`,
+        {
+          order_status: "Cancelled"
+        }
+      );
+      fetchOrders();
+      alert("Order cancelled successfully ✅");
+    } catch (err) {
+      console.log(err);
+      alert("Cancel failed ❌");
+    }
+  };
+
   // ======================================
   // FETCH ORDERS FROM DB
   // ======================================
@@ -46,19 +66,19 @@ function OrderHistory() {
   const downloadInvoice = (order) => {
 
   const doc = new jsPDF(
-  "p",
-  "mm",
-  "a4"
-);
+    "p",
+    "mm",
+    "a4"
+  );
 
-  
-   const subtotal = Number(order.amount);
+  const baseAmount = Number(order.base_amount || order.amount);
+  const discountPercent = Number(order.discount || 0);
+  const discountAmount = (baseAmount * discountPercent) / 100;
+  const subtotal = Number(order.amount);
+  const gst = (subtotal * 18) / 100;
+  const total = subtotal + gst; 
 
-   const gst = (subtotal * 18) / 100;
-
-   const total = subtotal + gst; 
-
-   const invoiceNumber =
+  const invoiceNumber =
   `INV-${order.id}-${Date.now()}`;
 
   // ======================================
@@ -145,33 +165,62 @@ doc.text("Product", 20, 95);
 doc.text(":", 55, 95);
 doc.text(order.product_name, 65, 95);
 
-doc.text("Subtotal", 20, 105);
+doc.text("Base Price", 20, 105);
 doc.text(":", 55, 105);
-doc.text(`₹${subtotal}`, 65, 105);
+doc.text(`₹${baseAmount}`, 65, 105);
 
-doc.text("GST (18%)", 20, 115);
-doc.text(":", 55, 115);
-doc.text(`₹${gst.toFixed(2)}`, 65, 115);
+if (discountPercent > 0) {
+  doc.text("Discount", 20, 115);
+  doc.text(":", 55, 115);
+  doc.text(`-₹${discountAmount.toFixed(2)} (${discountPercent}%)`, 65, 115);
 
-doc.text("Total", 20, 125);
-doc.text(":", 55, 125);
-doc.text(`₹${total.toFixed(2)}`, 65, 125);
-doc.text("Customer ID", 20, 135);
-doc.text(":", 55, 135);
-doc.text
-  `CUST-${order.user_id || order.id}`,
+  doc.text("Subtotal", 20, 125);
+  doc.text(":", 55, 125);
+  doc.text(`₹${subtotal}`, 65, 125);
+
+  doc.text("GST (18%)", 20, 135);
+  doc.text(":", 55, 135);
+  doc.text(`₹${gst.toFixed(2)}`, 65, 135);
+
+  doc.text("Total", 20, 145);
+  doc.text(":", 55, 145);
+  doc.text(`₹${total.toFixed(2)}`, 65, 145);
+  
+  doc.text("Coupon Code", 20, 155);
+  doc.text(":", 55, 155);
+  doc.text(order.coupon_code || "None", 65, 155);
+  doc.line(20, 165, 190, 165);
+} else {
+  doc.text("Subtotal", 20, 115);
+  doc.text(":", 55, 115);
+  doc.text(`₹${subtotal}`, 65, 115);
+
+  doc.text("GST (18%)", 20, 125);
+  doc.text(":", 55, 125);
+  doc.text(`₹${gst.toFixed(2)}`, 65, 125);
+
+  doc.text("Total", 20, 135);
+  doc.text(":", 55, 135);
+  doc.text(`₹${total.toFixed(2)}`, 65, 135);
+  doc.line(20, 145, 190, 145);
+}
+
+doc.text("Customer ID", 20, discountPercent > 0 ? 170 : 150);
+doc.text(":", 55, discountPercent > 0 ? 170 : 150);
+doc.text(
+  `CUST-${order.user_email || order.id}`,
   65,
-  135
-
-doc.line(20, 135, 190, 135);
+  discountPercent > 0 ? 170 : 150
+);
+doc.line(20, discountPercent > 0 ? 175 : 155, 190, discountPercent > 0 ? 175 : 155);
 
 // divider
 
 doc.line(
   20,
-  138,
+  discountPercent > 0 ? 178 : 158,
   190,
-  138
+  discountPercent > 0 ? 178 : 158
 );
 
 // ======================================
@@ -361,26 +410,53 @@ doc.text(
             
       {order.order_status === "Delivered" ? (
 
-          <button
+            <button
               style={styles.invoiceBtn}
               onClick={() =>
                 downloadInvoice(order)
               }
-          >
+            >
               Download Invoice
-          </button>
+            </button>
 
-          ) : (
+          ) : order.order_status === "Cancelled" ? (
 
-           <button
+            <button
               style={{
                 ...styles.invoiceBtn,
                 background: "#9ca3af",
                 cursor: "not-allowed"
               }}
+              disabled
             >
-              Invoice Available After Delivery
-           </button>
+              Order Cancelled
+            </button>
+
+          ) : order.order_status === "Processing" ? (
+
+            <button
+              style={{
+                ...styles.invoiceBtn,
+                background: "#f59e0b",
+                cursor: "pointer"
+              }}
+              onClick={() => cancelOrder(order.id, order.order_status)}
+            >
+              Cancel Order
+            </button>
+
+          ) : (
+
+            <button
+              style={{
+                ...styles.invoiceBtn,
+                background: "#9ca3af",
+                cursor: "not-allowed"
+              }}
+              disabled
+            >
+              Cannot Cancel
+            </button>
 
           )}
 

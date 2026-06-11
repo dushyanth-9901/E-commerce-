@@ -40,6 +40,7 @@ const addProduct = (req, res) => {
     name,
     price,
     stock,
+    category,
     image,
     images,
     description
@@ -47,8 +48,8 @@ const addProduct = (req, res) => {
 
   const sql = `
     INSERT INTO products
-    (name, price, stock, image, images, description)
-    VALUES (?, ?, ?, ?, ?, ?)
+    (name, price, stock, category, image, images, description)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
 
   db.query(
@@ -59,6 +60,7 @@ const addProduct = (req, res) => {
       name,
       price,
       stock,
+      category,
       image,
       images,
       description
@@ -100,11 +102,14 @@ const updateProduct = (req, res) => {
     name,
     price,
     stock,
-    image
+    category,
+    image,
+    images,
+    description
   } = req.body;
 
   const sql =
-    "UPDATE products SET name=?, price=?, stock=?, image=? WHERE id=?";
+    "UPDATE products SET name=?, price=?, stock=?, category=?, image=?, images=?, description=? WHERE id=?";
 
   db.query(
     sql,
@@ -112,7 +117,10 @@ const updateProduct = (req, res) => {
       name,
       price,
       stock,
+      category,
       image,
+      images,
+      description,
       id
     ],
     (err, result) => {

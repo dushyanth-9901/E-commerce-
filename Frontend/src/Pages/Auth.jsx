@@ -77,7 +77,7 @@ function Auth() {
 
     {/* LEFT SIDE BRAND */}
     <div style={styles.left}>
-      <h1 style={styles.brandTitle}>ShopEase 🚀</h1>
+      <h1 style={styles.brandTitle}>ShopEase 🛍️</h1>
       <p style={styles.brandText}>
         Buy smart. Live better.
       </p>

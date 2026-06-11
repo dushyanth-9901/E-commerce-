@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 
 import axios from "axios";
 
+import { FaTrash } from "react-icons/fa";
+
 import Sidebar from "../components/admin/Sidebar";
 import DashboardHome from "../components/admin/DashboardHome";
 import ProductsPage from "../components/admin/ProductsPage";
@@ -58,6 +60,7 @@ function AdminDashboard() {
       name: "",
       price: "",
       stock: "",
+      category: "",
       image: "",
       image2: "",
       image3: "",
@@ -84,6 +87,7 @@ function AdminDashboard() {
     name: "",
     price: "",
     stock: "",
+    category: "",
     image: "",
     image2: "",
     image3: "",
@@ -169,6 +173,7 @@ const [orderDateFilter, setOrderDateFilter] =
       !form.name ||
       !form.price ||
       !form.stock ||
+      !form.category ||
       !form.image
     ) {
       alert("Fill all fields");
@@ -183,6 +188,7 @@ const [orderDateFilter, setOrderDateFilter] =
           name: form.name,
           price: Number(form.price),
           stock: Number(form.stock),
+          category: form.category,
           image: form.image,
           images: JSON.stringify([
               form.image2,
@@ -199,6 +205,7 @@ const [orderDateFilter, setOrderDateFilter] =
         name: "",
         price: "",
         stock: "",
+        category: "",
         image: "",
         image2: "",
         image3: "",
@@ -257,6 +264,7 @@ const [orderDateFilter, setOrderDateFilter] =
             name: product.name,
             price: product.price,
             stock: product.stock,
+            category: product.category || "",
             image: product.image,
 
             image2: extraImages[0] || "",
@@ -284,6 +292,8 @@ const [orderDateFilter, setOrderDateFilter] =
         price: Number(editForm.price),
 
         stock: Number(editForm.stock),
+
+        category: editForm.category,
 
         image: editForm.image,
 
@@ -522,6 +532,33 @@ const monthSales =
   }
 
 };
+const deleteUser = async (email) => {
+
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this user permanently?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+
+    await axios.delete(
+      `http://localhost:5000/api/users/${email}`
+    );
+
+    alert("User Deleted Successfully");
+
+     fetchData();
+
+  } catch (error) {
+
+    console.log(error);
+
+    alert("Delete Failed");
+
+  }
+
+};
 
   // =====================================================
   // 🔥 RETURN
@@ -647,7 +684,7 @@ const monthSales =
 
       userSearch={userSearch}
       setUserSearch={setUserSearch}
-
+      deleteUser={deleteUser}
 />
 
         )}
@@ -671,6 +708,18 @@ const monthSales =
                 setEditForm({
                   ...editForm,
                   name: e.target.value
+                })
+              }
+            />
+            <input
+              type="text"
+              placeholder="Category"
+              style={styles.input}
+              value={editForm.category}
+              onChange={(e) =>
+                setEditForm({
+                  ...editForm,
+                  category: e.target.value
                 })
               }
             />
