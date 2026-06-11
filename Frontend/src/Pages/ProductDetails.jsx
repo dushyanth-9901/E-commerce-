@@ -127,7 +127,7 @@ function ProductDetails({ cart, setCart }) {
       );
 
       const options = {
-        key: "rzp_test_SsfWvZhtYI6dCX",
+        key: "rzp_test_SxQhtVAp5GhLB8",
         amount: order.data.amount,
         currency: order.data.currency,
         name: "E-Commerce Store",
